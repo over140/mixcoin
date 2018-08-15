@@ -2,7 +2,6 @@ const path = require('path');
 const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const ExtractTextPlugin = require("extract-text-webpack-plugin");
-const CompressionPlugin = require("compression-webpack-plugin");
 const ScriptExtHtmlWebpackPlugin = require("script-ext-html-webpack-plugin");
 const FaviconsWebpackPlugin = require('favicons-webpack-plugin');
 
@@ -18,12 +17,16 @@ const webRoot = function (env) {
   }
 };
 
-const clientId = function (env) {
+const appId = function (env) {
   if (env === 'production') {
     return '82d20bc7-9a97-4a69-bcd0-4da502374f6c';
   } else {
     return 'c2ab81d4-2226-4d0c-a49a-dc59b34f7972';
   }
+};
+
+const appSecret = function (env) {
+  // return your app secret
 };
 
 module.exports = {
@@ -72,17 +75,9 @@ module.exports = {
       API_ROOT: JSON.stringify("https://example.ocean.one"),
       ENGINE_ROOT: JSON.stringify("wss://events.ocean.one"),
       APP_NAME: JSON.stringify("Wallet Exchange"),
-      CLIENT_ID: JSON.stringify(clientId(process.env.NODE_ENV)),
-      CLIENT_SECRET: JSON.stringify(""),  //Your App secret
+      CLIENT_ID: JSON.stringify(appId(process.env.NODE_ENV)),
+      CLIENT_SECRET: JSON.stringify(appSecret(process.env.NODE_ENV)),
       ENGINE_USER_ID: JSON.stringify("aaff5bef-42fb-4c9f-90e0-29f69176b7d4")
-    }),
-    new CompressionPlugin({
-      asset: "[path]",
-      algorithm: "gzip",
-      test: /\.(js|css)$/,
-      threshold: process.env.NODE_ENV === 'production' ? 0 : 100000000000000,
-      minRatio: 1,
-      deleteOriginalAssets: false
     }),
     new HtmlWebpackPlugin({
       template: './src/layout.html'
