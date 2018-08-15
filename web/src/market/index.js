@@ -289,14 +289,10 @@ Market.prototype = {
   },
 
   renderMarket: function(m) {
-    m.change_amount = new BigNumber(m.price).minus(new BigNumber(m.price).div(new BigNumber(m.change).plus(1))).toFixed(8).replace(/\.?0+$/,"");
-    if (this.quote.asset_id === '815b0b1a-2764-3736-8faa-42d694fa620a') {
-      m.change_amount = new BigNumber(m.change_amount).toFixed(4).replace(/\.?0+$/,"");
-    }
-    m.direction = m.change < 0 ? 'down' : 'up';
-    m.change = (m.change < 0 ? '' : '+') + Number(m.change * 100).toFixed(2) + '%';
-    m.volume = new BigNumber(m.volume).toFixed(2);
-    m.total = new BigNumber(m.total).toFixed(2);
+    const direction = m.change < 0 ? 'down' : 'up';
+    const change = (m.change < 0 ? '' : '+') + Number(m.change * 100).toFixed(2) + '%';
+    const volume = new BigNumber(m.volume).toFixed(2);
+    const total = new BigNumber(m.total).toFixed(2);
     m.price_usd = new BigNumber(m.price).times(m.quote_usd);
     if (m.price_usd.toFixed(4).indexOf('0.00') === 0) {
       m.price_usd = new BigNumber(m.price_usd).toFixed(4);
@@ -307,10 +303,10 @@ Market.prototype = {
     this.quote_usd = m.quote_usd;
     $('.ticker.change').removeClass('up');
     $('.ticker.change').removeClass('down');
-    $('.ticker.change').addClass(m.direction);
-    $('.ticker.change .value').html(m.change);
-    $('.ticker.volume .value').html(m.volume);
-    $('.ticker.total .value').html(m.total);
+    $('.ticker.change').addClass(direction);
+    $('.ticker.change .value').html(change);
+    $('.ticker.volume .value').html(volume);
+    $('.ticker.total .value').html(total);
   },
 
   handleFormSwitch: function () {
