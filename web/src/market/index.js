@@ -459,7 +459,7 @@ Market.prototype = {
     const AmountPrecision = 4;
 
     const quotePrecision = this.quotePrecision(this.quote.asset_id);
-    const priceDecimal = this.parseNumber(data.price);
+    var priceDecimal = new BigNumber(this.parseNumber(data.price).toFixed(8));
     var maxPrice = MaximumPrice.shiftedBy(-quotePrecision);
     if (priceDecimal.isGreaterThan(maxPrice)) {
       this.alertError(window.i18n.t('market.errors.price_max', {price: maxPrice.toFormat(), symbol: this.quote.symbol}));
@@ -469,6 +469,18 @@ Market.prototype = {
     if (data.type === 'LIMIT' && priceDecimal.isZero()) {
       this.alertError(window.i18n.t('market.errors.price_zero'));
       return false;
+    }
+
+    if (this.quote.asset_id === this.api.asset.usdtAsset.asset_id) {
+      priceDecimal = new BigNumber(priceDecimal.toFixed(4));
+    }
+
+    if (data.type === 'LIMIT') {
+      const minPrice = new BigNumber(1).shiftedBy(-quotePrecision);
+      if (priceDecimal.isLessThan(minPrice)) {
+        this.alertError(window.i18n.t('market.errors.price_max', {price: minPrice.toFormat(), symbol: this.quote.symbol}));
+        return false;
+      }
     }
 
     const fundsPrecision = AmountPrecision + quotePrecision;
