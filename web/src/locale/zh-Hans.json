@@ -1,7 +1,8 @@
 {
   "appName": "MixCoin 交易所",
   "action": {
-    "ok": "好的"
+    "ok": "好的",
+    "submit": "提交"
   },
   "general": {
     "errors": {

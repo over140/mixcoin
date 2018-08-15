@@ -1,7 +1,8 @@
 {
   "appName": "MixCoin",
   "action": {
-    "ok": "OK"
+    "ok": "OK",
+    "submit": "Submit"
   },
   "general": {
     "errors": {
