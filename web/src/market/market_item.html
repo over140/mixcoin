@@ -1,0 +1,17 @@
+<li id="market-item-{{base.symbol}}-{{quote.symbol}}" class="market item" data-base-symbol="{{base.asset_id}}" data-quote-symbol="{{quote.asset_id}}">
+    <img src="{{base.icon_url}}" alt="{{base.symbol}}"/>
+    <div class="name">
+        {{base.symbol}}/{{quote.symbol}}
+    </div>
+    <div class="price">
+        <span class="text">{{price}}</span>
+        <span>{{quote.symbol}}</span>
+    </div>
+    <div class="change up">{{change}}</div>
+    <div class="volume">
+        <span>Vol</span>
+        <span class="text">{{volume}}</span>
+        <span>{{base.symbol}}</span>
+    </div>
+  </li>
+</li>

@@ -1,0 +1,29 @@
+<div class="container">
+  <header class="header">
+      <a class="nav back" href="/" data-navigo><i class="icon-arrow-left"></i></a>
+    <h1 class="title">{{t 'orders.cancel'}}</h1>
+  </header>
+  <section class="content">
+      <div class="management container">
+  
+        <img class="guide" src="{{guideURL}}"/>
+
+        <div class="mixin order">
+          <div>{{t 'orders.guide'}}</div>
+          <form action="javascript:void(0);" class="cancel order form">
+            <input class="cancel order input" type="text" name="snapshot_id" autocomplete="false" value=""/>
+            <input type="hidden" name="trace_id" value="{{trace}}" />
+            <input type="submit" value="{{t 'account.buttons.submit'}}" />
+            <div class="submit-loader">
+              <div class="spinner">
+                <div class="bounce1"></div>
+                <div class="bounce2"></div>
+                <div class="bounce3"></div>
+              </div>
+            </div>
+          </form>
+        </div>
+
+    </div>
+  </section>
+</div>

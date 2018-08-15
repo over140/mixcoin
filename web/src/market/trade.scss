@@ -1,0 +1,649 @@
+@import '../constant.scss';
+
+.market.layout {
+
+.market.detail.container {
+  width: 100%;
+  height: 100vh;
+  background: $color-main-background;
+  box-sizing: border-box;
+  padding-top: 64px;
+}
+
+.header.container {
+  width: 100%;
+  height: 64px;
+  border-bottom: 1px solid rgba(0,0,0,0.07);
+  box-sizing: border-box;
+  padding: 16px 32px;
+  display: flex;
+
+  .ticker {
+    margin-right: 32px;
+    line-height: 32px;
+    font-size: 24px;
+
+    .sub {
+      font-size: 70%;
+      opacity: 0.3;
+    }
+  }
+
+  .logo {
+    width: 30px;
+    height: 30px;
+    padding-right: 24px;
+    padding-bottom: 2px;
+
+    img {
+      width: 100%;
+      height: 100%;
+    }
+  }
+
+  .up .main {
+    color: $color-side-bid;
+  }
+
+  .down .main {
+    color: $color-side-ask;
+  }
+}
+
+.main.container {
+  display: flex;
+  height: calc(100% - 64px);
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.charts.container {
+  flex: 1;
+  margin: 0 auto;
+  height: calc(100%);
+  border-right: 1px solid rgba(0,0,0,0.07);
+
+  .tabs {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    border-bottom: 1px solid rgba(0,0,0,0.07);
+
+    li {
+      flex: 1;
+      list-style: none;
+      margin: auto;
+      padding: 0;
+      line-height: 32px;
+      font-size: 16px;
+      text-transform: uppercase;
+      cursor: pointer;
+      text-align: center;
+
+      &.active {
+        background: rgba(0,0,0,0.07);
+      }
+
+      &.depth {
+        display: none;
+      }
+    }
+  }
+
+  .price.chart {
+    height: calc(50% - 16px);
+    border-bottom: 1px solid rgba(0,0,0,0.07);
+  }
+
+  .depth.chart {
+    height: calc(50% - 16px);
+    border-bottom: 1px solid rgba(0,0,0,0.07);
+  }
+
+  .highcharts-point-up {
+    fill: $color-side-bid;
+    stroke: $color-side-bid;
+  }
+
+  .highcharts-point-down {
+    fill: $color-side-ask;
+    stroke: $color-side-ask;
+  }
+
+  .highcharts-ema-series {
+    .highcharts-point {
+      opacity: 0;
+    }
+
+    .highcharts-point-hover {
+      opacity: 1;
+    }
+  }
+}
+
+.orders.trades {
+  width: 280px;
+  height: calc(100%);
+  position: relative;
+  overflow: hidden;
+  font-family: $font-main-mono;
+  font-weight: 400;
+  font-size: 12px;
+  color: #555555;
+  border-right: 1px solid rgba(0,0,0,0.1);
+  box-sizing: border-box;
+  display: flex;
+
+  .tabs {
+    z-index: 1;
+    font-family: $font-main-content;
+    background: $color-main-background;
+    display: flex;
+    padding: 0 16px;
+    font-size: 14px;
+    line-height: 32px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .tab {
+    flex: 1;
+    width: 50%;
+    box-sizing: border-box;
+    text-align: center;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-bottom: 2px solid rgba(0,0,0,0.07);
+
+    &.active {
+      border-bottom: 2px solid $color-main-highlight;
+    }
+  }
+
+  .order.book {
+    flex: 1;
+    position: relative;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .trade.history {
+    flex: 1;
+    height: 100%;
+    overflow: hidden;
+    display: none;
+  }
+
+  .book.data {
+    display: none;
+    position: absolute;
+    width: 100%;
+  }
+
+  .history.data {
+    padding-top: 34px;
+    box-sizing: border-box;
+
+    li {
+      div.time {
+        text-align: left;
+        opacity: 0.3;
+      }
+
+      div.amount {
+        padding: 0 8px 0 4px;
+      }
+    }
+  }
+
+  ul {
+    margin: 0;
+    padding: 0;
+  }
+
+  li {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    cursor: pointer;
+    line-height: 1.5em;
+    display: flex;
+    text-align: right;
+    box-sizing: border-box;
+    padding: 0 16px;
+
+    div {
+      flex: 1;
+    }
+
+    .num {
+      opacity: 0.3;
+    }
+
+    &:hover {
+      background: rgba(0,0,0,0.05) !important;
+    }
+
+    &.spread {
+      display: block;
+      line-height: 2em;
+
+      div {
+        display: inline-block;
+      }
+
+      div:first-child {
+        font-size: 18px;
+      }
+    }
+  }
+
+  .ask .price {
+    color: $color-side-ask;
+  }
+
+  .bid .price {
+    color: $color-side-bid;
+  }
+
+  .trade.ask .price {
+    color: $color-side-bid;
+  }
+
+  .trade.bid .price {
+    color: $color-side-ask;
+  }
+}
+
+.trade.form {
+  width: 320px;
+  height: calc(100%);
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
+  color: #555555;
+
+  .tabs {
+    display: flex;
+    padding: 0 16px 8px 16px;
+    font-size: 14px;
+    line-height: 32px;
+
+    &.side {
+      padding-top: 8px;
+    }
+  }
+
+  .tab {
+    flex: 1;
+    width: 50%;
+    box-sizing: border-box;
+    text-align: center;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+
+  .type.tab {
+    border-bottom: 2px solid rgba(0,0,0,0.07);
+
+    &.active {
+      border-bottom: 2px solid $color-main-highlight;
+    }
+  }
+
+  .side.tab {
+    background: rgba(0,0,0,0.07);
+
+    &.buy {
+      border-radius: 4px 0 0 4px;
+
+      &.active {
+        background: $color-side-bid;
+        color: $color-main-background;
+      }
+    }
+
+    &.sell {
+      border-radius: 0 4px 4px 0;
+
+      &.active {
+        background: $color-side-ask;
+        color: $color-main-background;
+      }
+    }
+  }
+
+  .form {
+    display: none;
+    padding: 8px 16px;
+    box-sizing: border-box;
+    font-size: 16px;
+
+    &.active {
+      display: block;
+    }
+
+    .text.field {
+      margin-bottom: 16px;
+      border-bottom: 1px solid $color-main-highlight;
+      display: flex;
+    }
+
+    .label {
+      display: block;
+      line-height: 48px;
+
+      &.right {
+        text-align: right;
+      }
+    }
+
+    input[type="text"],
+    input[type="number"] {
+      margin: auto;
+      flex: 1;
+      border: 0 none;
+      outline: 0 none;
+      line-height: 48px;
+      font-family: $font-main-mono;
+      text-align: right;
+      display: block;
+      box-sizing: border-box;
+      padding: 0 8px;
+      min-width: 0;
+    }
+
+    .tips {
+      margin-top: 32px;
+      height: 24px;
+      width: 100%;
+      font-size: 10px;
+      color: red;
+      display: none;
+    }
+
+    input[type="submit"],
+    .submit-loader {
+      border: 0 none;
+      outline: 0 none;
+      margin-top: 32px;
+      line-height: 42px;
+      height: 42px;
+      display: block;
+      width: 100%;
+      text-transform: uppercase;
+      font-weight: 300;
+      box-sizing: border-box;
+      border-radius: 4px;
+      box-shadow: 0 0 2px rgba(0,0,0,0.1);
+      color: $color-main-background;
+      cursor: pointer;
+
+      &.buy {
+        background: $color-side-bid;
+      }
+
+      &.sell {
+        background: $color-side-ask;
+      }
+    }
+
+    .submit-loader {
+      display: none;
+    }
+  }
+
+  .account.balances {
+    line-height: 2.5em;
+    font-size: 14px;
+    padding: 16px 0;
+
+    .balance {
+      font-family: $font-main-mono;
+      display: flex;
+      padding: 0 16px;
+      display: none;
+
+      .asset {
+        flex: 1;
+        display: block;
+
+        &.amount {
+          text-align: right;
+        }
+      }
+    }
+
+    .actions {
+      display: flex;
+      margin-top: 8px;
+      flex-wrap: wrap;
+
+      .action {
+        flex: 1;
+        cursor: pointer;
+        border: 1px solid rgba(0,0,0,0.1);
+        color: $color-main-foreground-light;
+        border-radius: 2px;
+        display: block;
+        text-align: center;
+        text-transform: uppercase;
+        min-width: 120px;
+        margin: 8px 16px;
+
+        i {
+          font-size: 80%;
+          margin-right: 4px;
+        }
+      }
+    }
+  }
+}
+
+.submit-loader {
+  position: relative;
+  display: none;
+  cursor: wait;
+  background-color: $color-main-background;
+
+  .spinner {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 70px;
+    padding-top: 4px;
+    text-align: center;
+  }
+
+  .spinner > div {
+    width: 12px;
+    height: 12px;
+    background-color: $color-main-background;
+    border-radius: 100%;
+    display: inline-block;
+    animation: sk-bouncedelay 1.4s infinite ease-in-out both;
+  }
+
+  .spinner .bounce1 {
+    animation-delay: -0.32s;
+  }
+
+  .spinner .bounce2 {
+    animation-delay: -0.16s;
+  }
+
+  @keyframes sk-bouncedelay {
+    0%, 80%, 100% {
+      transform: scale(0);
+    } 40% {
+      transform: scale(1.0);
+    }
+  }
+}
+
+@media (min-width: 1600px) {
+  .orders.trades {
+    width: 560px;
+    font-size: 14px;
+    font-weight: 300;
+
+    .tabs {
+      padding: 0;
+
+      .tab.active {
+        border-bottom: 2px solid rgba(0,0,0,0.1);
+      }
+    }
+
+    .order.book,
+    .trade.history {
+      width: 50%;
+      display: block;
+    }
+
+    .trade.history {
+      border-left: 1px solid rgba(0,0,0,0.1);
+    }
+  }
+}
+
+@media (max-width: 1024px) {
+  .market.detail.container {
+    height: auto;
+  }
+
+  .header.container {
+    .ticker {
+      margin: 0;
+      flex: 1;
+    }
+
+    .ticker.total {
+      display: none;
+    }
+
+    .logo {
+      display: none;
+    }
+  }
+
+  .main.container {
+    flex-wrap: wrap;
+    height: auto;
+    margin: 0;
+    padding: 0;
+  }
+
+  .charts.container {
+    flex-basis: 100%;
+    height: 360px;
+
+    .tabs li {
+      font-size: 14px;
+
+      &.depth {
+        display: block;
+      }
+    }
+
+    .price.chart {
+      height: calc(100% - 32px);
+    }
+
+    .depth.chart {
+      height: calc(100% - 32px);
+      display: none;
+    }
+  }
+
+  .orders.trades,
+  .trade.form {
+    height: 512px;
+    width: 50%;
+    border-top: 1px solid rgba(0,0,0,0.1);
+    margin-top: 16px;
+
+    .form {
+      font-size: 14px;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .header.container {
+    padding: 14px 16px 10px;
+
+    .ticker {
+      line-height: 20px;
+      font-size: 16px;
+      text-align: center;
+
+      .main,
+      .sub {
+        display: block;
+      }
+    }
+  }
+
+  .charts.container {
+    height: 300px;
+
+    .tabs li {
+      font-size: 12px;
+    }
+  }
+
+  .orders.trades,
+  .trade.form {
+    height: 400px;
+    min-height: 50vh;
+  }
+
+  .trade.form .side.tabs {
+    padding-top: 0;
+  }
+
+  .trade.form .form {
+    padding-top: 0;
+
+    .text.field {
+      margin-bottom: 8px;
+      font-size: 12px;
+    }
+
+    .label,
+    input[type="text"],
+    input[type="number"] {
+      line-height: 36px;
+    }
+
+    input[type="submit"],
+    .submit-loader {
+      margin-top: 16px;
+      line-height: 36px;
+    }
+  }
+
+  .trade.form .account.balances {
+    font-size: 12px;
+    padding: 8px 0;
+
+    .balance {
+      line-height: 2em;
+    }
+  }
+
+  .orders.trades {
+    font-size: 12px;
+
+    .data {
+      font-weight: 400;
+    }
+  }
+}
+
+}

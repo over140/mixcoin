@@ -1,0 +1,48 @@
+@import '../constant.scss';
+
+.account.layout {
+
+  .management.container {
+    width: 100%;
+    max-width: 640px;
+    margin: 0 auto;
+    box-sizing: border-box;
+    padding: 0 16px;
+
+    img {
+      width: 60%;
+    }
+
+    .mixin.order.button a {
+      display: inline-block;
+      text-decoration: none;
+      background: $color-main-highlight;
+      box-shadow: 0 0 4px rgba(0,0,0,0.3);
+      border-radius: 4px;
+      color: $color-main-background;
+      font-size: 20px;
+      padding: 12px 32px;
+      margin: 32px 0 16px;
+    }
+  
+    .mixin.order {
+      text-align: left;
+      line-height: 1.5em;
+  
+      div {
+        margin-bottom: 16px;
+      }
+  
+      input {
+        margin: 16px 0;
+      }
+  
+      input[type="text"] {
+        font-size: 20px;
+        letter-spacing: 2px;
+      }
+    }
+  }
+  
+
+}

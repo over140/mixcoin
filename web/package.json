@@ -1,0 +1,48 @@
+{
+  "name": "ocean.one",
+  "version": "1.0.0",
+  "description": "Ocean ONE cache layer Web interface.",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "watch": "webpack -w --mode=development",
+    "dist": "NODE_ENV=production webpack -p --mode=production"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "base64url": "^3.0.0",
+    "bignumber.js": "^7.2.1",
+    "handlebars": "^4.0.11",
+    "intl-tel-input": "^13.0.2",
+    "jquery": "^3.3.1",
+    "jsrsasign": "^8.0.12",
+    "moment": "^2.22.2",
+    "msgpack-lite": "^0.1.26",
+    "navigo": "^7.1.2",
+    "node-forge": "^0.7.5",
+    "node-polyglot": "^2.3.0",
+    "noty": "^3.2.0-beta",
+    "pako": "^1.0.6",
+    "qrious": "^4.0.2",
+    "reconnecting-websocket": "^4.0.0-rc5",
+    "simple-line-icons": "^2.4.1",
+    "uuid": "^3.3.2",
+    "uuid-parse": "^1.0.0"
+  },
+  "devDependencies": {
+    "compression-webpack-plugin": "^1.1.11",
+    "css-loader": "^0.28.11",
+    "extract-text-webpack-plugin": "^4.0.0-beta.0",
+    "favicons-webpack-plugin": "0.0.9",
+    "file-loader": "^1.1.11",
+    "handlebars-loader": "^1.7.0",
+    "html-webpack-plugin": "^3.2.0",
+    "node-sass": "^4.9.3",
+    "sass-loader": "^7.1.0",
+    "script-ext-html-webpack-plugin": "^2.0.1",
+    "style-loader": "^0.21.0",
+    "webpack": "^4.16.5",
+    "webpack-cli": "^3.1.0"
+  }
+}

@@ -1,0 +1,233 @@
+@import '../constant.scss';
+
+.layout.nav {
+  background-image: url('./masthead.jpg');
+  background-position: center top;
+  background-repeat: no-repeat;
+  background-size: cover;
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 100%;
+  z-index: 99;
+
+  .overlay {
+    background: linear-gradient(rgba(0,18,83,0.9), rgba(0,18,83,0.6) 100%);
+    padding: 8px 16px;
+    box-shadow: 0 0 4px rgba(0,18,83,0.6);
+    position: relative;
+  }
+
+  .logo {
+    line-height: 48px;
+    margin: 0;
+
+    img {
+      width: 64px;
+      height: 30px;
+      vertical-align: middle;
+      padding-bottom: 8px;
+    }
+  }
+
+  .title {
+    margin: 0;
+    line-height: 64px;
+    display: inline-block;
+    color: $color-main-background;
+    position: absolute;
+    left: 50%;
+    top: 0;
+    transform: translateX(-50%);
+    font-size: 24px;
+    font-weight: 300;
+    cursor: pointer;
+
+    .arrow {
+      font-size: 12px;
+      float: right;
+      line-height: 64px;
+    }
+  }
+
+  .account {
+    color: $color-main-background;
+    font-size: 24px;
+    line-height: 64px;
+    display: inline-block;
+    position: absolute;
+    top: 0;
+    right: 16px;
+
+    &.in {
+      display: none;
+    }
+  }
+}
+
+.layout.markets.container {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  z-index: 90;
+  background: $color-main-background;
+  border: 1px solid #ccc;
+  top: 64px;
+  display: none;
+
+  .tabpane {
+    width: 100%;
+    // height: 64px;
+    // border: 1px solid #ccc;
+    // border-bottom: 1px solid #ccc;
+    background-color: #ffffff;
+    
+
+    .tab {
+      background-color: #ffffff;
+      padding: 15px 30px;
+      float: left;
+
+      &.active {
+        //background-color:rgba(0,0,0,.07);
+        border-bottom: 2px solid $color-main-highlight;
+      }
+    }
+  }
+
+  .markets {
+    position: relative;
+    box-sizing: border-box;
+    z-index: 2;
+    width: 100%;
+    height: 100%;
+    overflow: scroll;
+
+    .market.item {
+      background: #ffffff;
+      position: relative;
+      border-bottom: 1px solid #f4f4f4;
+      list-style: none;
+      height: 48px;
+
+      img {
+        position: absolute;
+        top: 12px;
+        left: 16px;
+        width: 24px;
+        height: 24px;
+        vertical-align: middle;
+      }
+
+      .name {
+        position: absolute;
+        top: 10px;
+        left: 52px;
+        color: #000000;
+        letter-spacing: 1px;
+        line-height: 1;
+      }
+
+      .price {
+        position: absolute;
+        bottom: 10px;
+        left: 52px;
+        color: #cccccc;
+        font-size: 9px;
+      }
+
+      .change.down {
+        position: absolute;
+        top: 11px;
+        right: 16px;
+        font-size: 10px;
+        font-weight: 600;
+        color: #E55541;
+      }
+
+      .change.up {
+        position: absolute;
+        top: 11px;
+        right: 16px;
+        font-size: 10px;
+        font-weight: 600;
+        color: #00B56E;
+      }
+
+      .volume {
+        position: absolute;
+        right: 16px;
+        bottom: 10px;
+        color: #ccc;
+        font-size: 9px;
+        text-align: right;
+      }
+    }
+  }
+
+}
+
+.layout.trade {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  background: $color-main-background;
+  // border: 1px solid #ccc;
+  // margin: 10px;
+  top: 64px;
+}
+
+.modal-container {
+  background: rgba(0, 0, 0, 0.3);
+  display: none;
+  position: fixed;
+  z-index: 999;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+
+  img {
+    border-radius: 1.5rem;
+    width: 3rem;
+    height: 3rem;
+    margin-bottom: 1rem;
+  }
+  .modal-body {
+    box-sizing: border-box;
+    background: white;
+    text-align: left;
+    margin: 18rem auto 0;
+    padding: 1rem;
+    width: 80%;
+    border-radius: 8px;
+  }
+  .header {
+    text-align: right;
+    font-size: 1.6rem;
+    cursor: pointer;
+    margin-bottom: .6rem;
+  }
+  .modal-name {
+    font-size: 20px;
+    margin-top: 0.5rem;
+    margin-bottom: 1.5rem;
+    margin-left: 10px;
+  }
+  .actions {
+    margin-bottom: 0.5rem;
+    text-align: right;
+  }
+  a.btn {
+    margin-top: 1rem;
+    margin-right: 10px;
+    font-size: 18px;
+    font-weight: 300;
+    color: #007AFF;
+    width: 50%;
+    border-radius: 6px;
+    &:hover {
+      background-color: #3cb1d4;
+    }
+  }
+}

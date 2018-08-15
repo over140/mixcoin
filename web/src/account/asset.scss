@@ -1,0 +1,202 @@
+@import '../constant.scss';
+
+.account.layout {
+
+.management.container {
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+  box-sizing: border-box;
+  padding: 0 16px;
+}
+
+.account.balance {
+  img {
+    width: 64px;
+    height: 64px;
+  }
+
+  h2 {
+    margin: 16px 0 32px;
+  }
+}
+
+.account.deposit.container,
+.address.deposit.container {
+  display: none;
+
+  input.account,
+  input.address {
+    margin: 0 0 32px;
+    font-size: 14px;
+    font-family: $font-main-mono;
+    font-weight: 300;
+    background: rgba(0,0,0,0.07);
+    border: 1px solid rgba(0,0,0,0.07);
+    border-top: 0 none;
+    border-radius: 0 0 2px 2px;
+    padding: 8px 16px;
+    box-sizing: border-box;
+  }
+
+  input.account {
+    margin-bottom: 16px;
+  }
+
+  .label {
+    margin: 0;
+    color: $color-main-background;
+    border: 1px solid rgba(0,0,0,0.07);
+    border-bottom: 0 none;
+    border-radius: 2px 2px 0 0;
+    background: rgba(0,0,0,0.07);
+
+    label {
+      margin: 0;
+      display: inline-block;
+      background: $color-side-bid;
+      padding: 4px 8px;
+      font-size: 12px;
+    }
+  }
+
+  .label.account.name {
+    margin-top: 32px;
+  }
+
+  .code.container {
+    box-sizing: border-box;
+    max-width: 360px;
+    margin: 0 auto;
+
+    &.account {
+      max-width: 240px;
+    }
+
+    canvas {
+      width: 100%;
+    }
+  }
+}
+
+.deposit.notice {
+  margin: 32px 0;
+}
+
+.accounts.list {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 16px;
+  max-width: 640px;
+  margin: 0 auto;
+  box-sizing: border-box;
+  padding: 0 16px;
+
+  tbody {
+    display: table-row-group;
+    vertical-align: middle;
+  }
+
+  th, td {
+    text-align: right;
+    padding: 16px 0;
+
+    &:first-child,
+    &:nth-child(2) {
+      text-align: left;
+    }
+  }
+
+  th {
+    cursor: pointer;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+
+  tr {
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+
+  td {
+    line-height: 20px;
+  }
+
+  img {
+    width: 32px;
+    height: 32px;
+    padding-bottom: 4px;
+    display: block;
+  }
+
+  .action {
+    flex: 1;
+    cursor: pointer;
+    border: 1px solid rgba(0,0,0,0.1);
+    color: $color-main-foreground-light;
+    border-radius: 2px;
+    display: inline-block;
+    text-align: center;
+    margin: 4px;
+    padding: 4px 8px;
+
+    &:last-child {
+      margin-right: 0;
+    }
+  }
+}
+
+.withdrawal.action.container {
+  .steps,
+  .steps li {
+    margin: 0;
+    padding: 0;
+    list-style: circle;
+    text-align: left;
+    line-height: 1.3em;
+  }
+
+  .steps li {
+    margin: 0 0 8px 16px;
+
+    a {
+      color: $color-main-highlight;
+      text-decoration: underline;
+    }
+  }
+
+  .mixin.connect.button a {
+    display: inline-block;
+    text-decoration: none;
+    background: $color-main-highlight;
+    box-shadow: 0 0 4px rgba(0,0,0,0.3);
+    border-radius: 4px;
+    color: $color-main-background;
+    font-size: 20px;
+    padding: 12px 32px;
+    margin: 32px 0 16px;
+  }
+
+  .mixin.connected {
+    text-align: left;
+    line-height: 1.5em;
+
+    div {
+      margin-bottom: 16px;
+    }
+
+    input {
+      margin: 16px 0;
+    }
+
+    input[type="text"] {
+      font-size: 20px;
+      letter-spacing: 2px;
+    }
+  }
+}
+
+}

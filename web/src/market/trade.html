@@ -1,0 +1,212 @@
+<div class="market detail container">
+  <div class="header container">
+    <div class="base logo">
+      <img src="{{base.icon_url}}" alt="{{base.name}}" />
+    </div>
+    <div class="ticker price">
+      <span class="main"><span class="price quote">0</span> <span class="symbol">{{quote.symbol}}</span></span>
+      <span class="sub"><span class="price fiat"></span></span>
+    </div>
+    <div class="ticker change">
+      <span class="main"><span class="value">0%</span></span>
+      <span class="sub">{{t 'market.ticker.change'}}</span>
+    </div>
+    <div class="ticker volume">
+      <span class="main"><span class="value">0</span> <span class="symbol">{{base.symbol}}</span></span>
+      <span class="sub">{{t 'market.ticker.volume'}}</span>
+    </div>
+    <div class="ticker total">
+      <span class="main"><span class="value">0</span> <span class="symbol">{{quote.symbol}}</span></span>
+      <span class="sub">{{t 'market.ticker.total'}}</span>
+    </div>
+  </div>
+  <div class="main container">
+    <div class="charts container">
+      <ul class="tabs">
+        <li data-granularity="60">1m</li>
+        <li data-granularity="300" class="active">5m</li>
+        <li data-granularity="900">15m</li>
+        <li data-granularity="3600">1h</li>
+        <li data-granularity="21600">6h</li>
+        <li data-granularity="86400">1d</li>
+        <li class="depth">{{t 'market.chart.depth'}}</li>
+      </ul>
+      <div class="price chart">
+        <div class="spinner-container">
+          <div class="spinner">
+            <div class="rect1"></div>
+            <div class="rect2"></div>
+            <div class="rect3"></div>
+            <div class="rect4"></div>
+            <div class="rect5"></div>
+          </div>
+        </div>
+      </div>
+      <div class="depth chart">
+        <div class="spinner-container">
+          <div class="spinner">
+            <div class="rect1"></div>
+            <div class="rect2"></div>
+            <div class="rect3"></div>
+            <div class="rect4"></div>
+            <div class="rect5"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="orders trades">
+      <div class="tabs">
+        <div class="book tab active">{{t 'market.table.book'}}</div>
+        <div class="history tab">{{t 'market.table.history'}}</div>
+      </div>
+      <div class="order book">
+        <div class="spinner-container">
+          <div class="spinner">
+            <div class="rect1"></div>
+            <div class="rect2"></div>
+            <div class="rect3"></div>
+            <div class="rect4"></div>
+            <div class="rect5"></div>
+          </div>
+        </div>
+        <ul class="book data">
+          <li class="spread" data-price="0">
+            <div class="price quote"></div>
+            <div class="price fiat"></div>
+          </li>
+        </ul>
+      </div>
+      <div class="trade history">
+        <div class="spinner-container">
+          <div class="spinner">
+            <div class="rect1"></div>
+            <div class="rect2"></div>
+            <div class="rect3"></div>
+            <div class="rect4"></div>
+            <div class="rect5"></div>
+          </div>
+        </div>
+        <ul class="history data">
+        </ul>
+      </div>
+    </div>
+    <div class="trade form">
+      <div class="type tabs">
+        <div class="limit type tab active" data-type="LIMIT">{{t 'market.form.limit'}}</div>
+        <div class="market type tab" data-type="MARKET">{{t 'market.form.market'}}</div>
+      </div>
+      <div class="side tabs">
+        <div class="buy bid side tab active" data-side="BID">{{t 'market.form.buy'}}</div>
+        <div class="sell ask side tab" data-side="ASK">{{t 'market.form.sell'}}</div>
+      </div>
+      <form action="javascript:void(0);" class="limit buy bid form active">
+        <div class="text field">
+          <span class="price left label">{{t 'market.form.price'}}</span>
+          <input type="number" name="price" step="{{quote.step}}" autocomplete="off" />
+          <span class="price right label">{{quote.symbol}}</span>
+        </div>
+        <div class="text field">
+          <span class="amount left label">{{t 'market.form.amount'}}</span>
+          <input type="number" name="amount" step="0.00000001" autocomplete="off" />
+          <span class="amount right label">{{base.symbol}}</span>
+        </div>
+        <div class="field">
+          <input type="hidden" name="base" value="{{base.asset_id}}" />
+          <input type="hidden" name="quote" value="{{quote.asset_id}}" />
+          <input type="hidden" name="type" value="LIMIT" />
+          <input type="hidden" name="side" value="BID" />
+          <input type="hidden" name="trace_id" value="{{trace}}" />
+          <input type="submit" value="{{t 'market.form.button.buy' symbol=base.symbol}}" class="buy bid button" />
+          <div class="submit-loader buy bid">
+            <div class="spinner">
+              <div class="bounce1"></div>
+              <div class="bounce2"></div>
+              <div class="bounce3"></div>
+            </div>
+          </div>
+        </div>
+      </form>
+      <form action="javascript:void(0);" class="limit sell ask form">
+        <div class="text field">
+          <span class="price left label">{{t 'market.form.price'}}</span>
+          <input type="number" name="price" step="{{quote.step}}" autocomplete="off" />
+          <span class="price right label">{{quote.symbol}}</span>
+        </div>
+        <div class="text field">
+          <span class="amount left label">{{t 'market.form.amount'}}</span>
+          <input type="number" name="amount" step="0.00000001" autocomplete="off" />
+          <span class="amount right label">{{base.symbol}}</span>
+        </div>
+        <div class="field">
+          <input type="hidden" name="base" value="{{base.asset_id}}" />
+          <input type="hidden" name="quote" value="{{quote.asset_id}}" />
+          <input type="hidden" name="type" value="LIMIT" />
+          <input type="hidden" name="side" value="ASK" />
+          <input type="hidden" name="trace_id" value="{{trace}}" />
+          <input type="submit" value="{{t 'market.form.button.sell' symbol=base.symbol}}" class="sell ask button" />
+          <div class="submit-loader sell ask">
+            <div class="spinner">
+              <div class="bounce1"></div>
+              <div class="bounce2"></div>
+              <div class="bounce3"></div>
+            </div>
+          </div>
+        </div>
+      </form>
+      <form action="javascript:void(0);" class="market buy bid form">
+        <div class="text field">
+          <span class="funds left label">{{t 'market.form.amount'}}</span>
+          <input type="number" name="funds" step="0.00000001" autocomplete="off" />
+          <span class="funds right label">{{quote.symbol}}</span>
+        </div>
+        <div class="field">
+          <input type="hidden" name="base" value="{{base.asset_id}}" />
+          <input type="hidden" name="quote" value="{{quote.asset_id}}" />
+          <input type="hidden" name="type" value="MARKET" />
+          <input type="hidden" name="side" value="BID" />
+          <input type="hidden" name="trace_id" value="{{trace}}" />
+          <input type="submit" value="{{t 'market.form.button.buy' symbol=base.symbol}}" class="buy bid button" />
+          <div class="submit-loader buy bid">
+            <div class="spinner">
+              <div class="bounce1"></div>
+              <div class="bounce2"></div>
+              <div class="bounce3"></div>
+            </div>
+          </div>
+        </div>
+      </form>
+      <form action="javascript:void(0);" class="market sell ask form">
+        <div class="text field">
+          <span class="amount left label">{{t 'market.form.amount'}}</span>
+          <input type="number" name="amount" step="0.00000001" autocomplete="off" />
+          <span class="amount right label">{{base.symbol}}</span>
+        </div>
+        <div class="field">
+          <input type="hidden" name="base" value="{{base.asset_id}}" />
+          <input type="hidden" name="quote" value="{{quote.asset_id}}" />
+          <input type="hidden" name="type" value="MARKET" />
+          <input type="hidden" name="side" value="ASK" />
+          <input type="hidden" name="trace_id" value="{{trace}}" />
+          <input type="submit" value="{{t 'market.form.button.sell' symbol=base.symbol}}" class="sell ask button" />
+          <div class="submit-loader sell ask">
+            <div class="spinner">
+              <div class="bounce1"></div>
+              <div class="bounce2"></div>
+              <div class="bounce3"></div>
+            </div>
+          </div>
+        </div>
+      </form>
+      <div class="account balances">
+          <div class="{{base.symbol}} base balance">
+            <span class="asset name">{{base.symbol}}</span>
+            <span class="{{base.symbol}} asset amount">0</span>
+          </div>
+          <div class="{{quote.symbol}} quote balance">
+            <span class="asset name">{{quote.symbol}}</span>
+            <span class="{{quote.symbol}} asset amount">0</span>
+          </div>
+        </div>
+    </div>
+  </div>
+</div>
