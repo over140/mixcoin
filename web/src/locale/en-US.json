@@ -1,5 +1,5 @@
 {
-  "appName": "Mixin Wallet Exchange",
+  "appName": "MixCoin",
   "action": {
     "ok": "OK"
   },
@@ -12,34 +12,8 @@
       "403": "Access denied.",
       "500": "Internal server error.",
       "10001": "Internal server error.",
-      "10002": "Invalid data.",
-      "20110": "Invalid phone number.",
-      "20111": "Too many users registered, please wait.",
-      "20113": "Invalid phone verification code.",
-      "20114": "Expired phone verification code.",
-      "20117": "Insufficient balance.",
-      "20118": "Password too simple, at least 8 characters required.",
-      "20122": "This phone is already registered, please log in."
+      "10002": "Invalid data."
     }
-  },
-  "account": {
-    "tabs": {
-      "phone": "Phone",
-      "email": "Email"
-    },
-    "code": {
-      "title": "Enter the 6-digit verification code sent to you at %{phone}."
-    },
-    "notifications": {
-      "password.mismatch": "Password mismatch.",
-      "phone.verification.send.success": "We have sent the verification code to your phone."
-    },
-    "buttons": {
-      "get.code": "Get Verification Code",
-      "submit": "Submit",
-      "create.user": "Create Account"
-    },
-    "placeholder.password": "Password"
   },
   "orders": {
     "title": "My Orders",
@@ -51,16 +25,6 @@
     "invalid.transaction.id": "Invalid transaction id",
     "cancel.success": "Order canceled successfully",
     "insufficient.balance": "Please keep some OOO or CNB or NXC or CANDY token to cancel the order."
-  },
-  "deposit": {
-    "title": "Deposit",
-    "address": "Address",
-    "account.name": "Account",
-    "account.tag": "Memo",
-    "confirmations": "The deposit will arrive after at least %{confirmations} confirmations."
-  },
-  "withdrawal": {
-    "title": "Withdrawal"
   },
   "home": {
     "headline": "An open source decentralized exchange to trade all digital assets.",

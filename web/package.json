@@ -1,7 +1,7 @@
 {
-  "name": "ocean.one",
+  "name": "MixCoin",
   "version": "1.0.0",
-  "description": "Ocean ONE cache layer Web interface.",
+  "description": "MixCoin cache layer Web interface.",
   "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",

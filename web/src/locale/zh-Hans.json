@@ -1,5 +1,5 @@
 {
-  "appName": "万币交易所",
+  "appName": "MixCoin 交易所",
   "action": {
     "ok": "好的"
   },
@@ -8,38 +8,12 @@
       "0": "网络错误。",
       "400": "数据无效。",
       "404": "未找到。",
-      "401": "未经授权，可能是无效的电子邮件或密码。",
+      "401": "未经授权的访问。",
       "403": "拒绝访问。",
       "500": "内部服务器错误。",
       "10001": "内部服务器错误。",
-      "10002": "数据无效。",
-      "20110": "电话号码无效。",
-      "20111": "注册的用户太多，请稍等。",
-      "20113": "手机验证码无效。",
-      "20114": "过期的手机验证码。",
-      "20117": "余额不足。",
-      "20118": "密码太简单，至少需要8个字符。",
-      "20122": "此手机已经注册，请登录。"
+      "10002": "数据无效。"
     }
-  },
-  "account": {
-    "tabs": {
-      "phone": "电话",
-      "email": "邮箱"
-    },
-    "code": {
-      "title": "请输入发送到 %{phone} 的 6 位数字验证码。"
-    },
-    "notifications": {
-      "password.mismatch": "两次密码输入不匹配。",
-      "phone.verification.send.success": "我们已经将验证码发送到了你的手机。"
-    },
-    "buttons": {
-      "get.code": "获取验证码",
-      "submit": "提交",
-      "create.user": "创建账户"
-    },
-    "placeholder.password": "密码"
   },
   "orders": {
     "title": "我的挂单",
@@ -51,16 +25,6 @@
     "invalid.transaction.id": "无效的交易编号",
     "cancel.success": "订单取消成功",
     "insufficient.balance": "请保留少量的 OOO、CNB、NXC 或 CANDY 代币用于取消订单"
-  },
-  "deposit": {
-    "title": "充值",
-    "address": "地址",
-    "account.name": "账户",
-    "account.tag": "Memo",
-    "confirmations": "充值需要至少 %{confirmations} 个确认才能到账。"
-  },
-  "withdrawal": {
-    "title": "提现"
   },
   "home": {
     "headline": "一个开源的分布式交易所，用于交易所有数字资产。",
