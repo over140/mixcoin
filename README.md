@@ -1,2 +1,2 @@
-# exchange
+# MixCoin
 Mixin Messenger Exchange Bot
