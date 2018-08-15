@@ -19,6 +19,10 @@ function Market(router, api) {
   this.itemMarket = require('./market_item.html');
   this.mixin = new Mixin(this);
   this.markets = {};
+  this.favorited = window.localStorage.getItem("account.favorited");
+  if (!this.favorited || this.favorited === undefined) {
+    this.favorited = '';
+  }
   jQueryColor($);
 
   BigNumber.config({ 
@@ -69,11 +73,11 @@ Market.prototype = {
         }
       });
 
-      const markets = ['usdt', 'xin', 'btc'];
-      for (var i = 0; i < 3; i++) {
-        const market = markets[i]
+      const markets = ['star', 'usdt', 'xin', 'btc'];
+      for (var i = 0; i < markets.length; i++) {
+        const market = markets[i];
         $('.' + market + '.tab').on('click', function (event) {
-          for (var j = 0; j < 3; j++) {
+          for (var j = 0; j < markets.length; j++) {
             if (j !== i) {
               $('.' + markets[j] + '.markets').hide();
             }
@@ -83,6 +87,8 @@ Market.prototype = {
           $('.' + market + '.tab').addClass('active');
         });
       }
+
+      $('.usdt.markets').show();
 
       resp.data.sort(function (a, b) {
         var at = parseFloat(a.price_usd) * parseFloat(a.balance);
@@ -109,14 +115,29 @@ Market.prototype = {
           const baseAsset = resp.data[j];
 
           if (self.validateQuoteBase(baseAsset.asset_id, quoteAsset.asset_id)) {
-            const market = self.itemMarket({
+            const isFavorited = self.isFavoritedPair(baseAsset.asset_id, quoteAsset.asset_id);
+            if (isFavorited) {
+              const starItemMark = self.itemMarket({
+                base: baseAsset,
+                quote: quoteAsset,
+                volume: 0,
+                price: 0,
+                change: 0
+              });
+              $('.star.markets').append(starItemMark);
+            }
+
+            const itemMark = self.itemMarket({
               base: baseAsset,
               quote: quoteAsset,
               volume: 0,
               price: 0,
               change: 0
             });
-            $('.' + quoteAsset.symbol.toLowerCase() + '.markets').append(market);
+            $('.' + quoteAsset.symbol.toLowerCase() + '.markets').append(itemMark);
+            if (isFavorited) {
+              $('#market-item-' + baseAsset.symbol + '-' + quoteAsset.symbol+' .favor').addClass('active');
+            }
             self.refreshMarket(baseAsset, quoteAsset)
           }
         }
@@ -129,6 +150,29 @@ Market.prototype = {
         const quoteAsset = self.api.asset.getById($(this).data('quote-symbol'));
         self.api.engine.unsubscribe(self.base.asset_id + '-' + self.quote.asset_id);
         self.refreshTrade(baseAsset, quoteAsset);
+      });
+
+      $('.layout.markets.container').on('click', '.market.item .favor', function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        var item = $(this).parent();
+        var isStarTab = item.parent().hasClass('star');
+
+        const baseAsset = self.api.asset.getById(item.data('base-symbol'));
+        const quoteAsset = self.api.asset.getById(item.data('quote-symbol'));
+        if (self.isFavoritedPair(baseAsset.asset_id, quoteAsset.asset_id)) {
+          self.removeFavoritedPair(baseAsset.asset_id, quoteAsset.asset_id);
+          $('#market-item-' + baseAsset.symbol + '-' + quoteAsset.symbol+' .favor').removeClass('active');
+          if (isStarTab) {
+            $(item).remove();
+          } else {
+            $('.star.markets #market-item-' + baseAsset.symbol + '-' + quoteAsset.symbol).remove();
+          }
+        } else {
+          self.saveFavoritedPair(baseAsset.asset_id, quoteAsset.asset_id);
+          $('#market-item-' + baseAsset.symbol + '-' + quoteAsset.symbol+' .favor').addClass('active');
+          $('.star.markets').append(item.clone());
+        }
       });
 
       $('.action.ok').on('click', function () {
@@ -931,6 +975,24 @@ Market.prototype = {
       $('.balance.' + data.symbol).css({display: 'flex'});
       $('.asset.amount.' + data.symbol).html(data.balance);
     }, asset);
+  },
+
+  isFavoritedPair: function(baseAssetId, quoteAssetId) {
+    return this.favorited.indexOf(baseAssetId + quoteAssetId + ',') > -1;
+  },
+
+  saveFavoritedPair: function(baseAssetId, quoteAssetId) {
+    const pair = baseAssetId + quoteAssetId + ',';
+    if (this.isFavoritedPair(baseAssetId, quoteAssetId)) {
+      return;
+    }
+    this.favorited += pair;
+    window.localStorage.setItem("account.favorited", this.favorited);
+  },
+
+  removeFavoritedPair: function(baseAssetId, quoteAssetId) {
+    this.favorited = this.favorited.replace(baseAssetId + quoteAssetId + ',', '');
+    window.localStorage.setItem("account.favorited", this.favorited);
   }
   
 };
