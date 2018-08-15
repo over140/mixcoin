@@ -258,7 +258,7 @@ Market.prototype = {
       }
       self.markets[self.base.asset_id + '-' + self.quote.asset_id] = resp.data;
       self.renderMarket(resp.data);
-    }, self.base.asset_id + '-' + self.quote.asset_id);
+    }, self.base.asset_id, self.quote.asset_id);
   },
 
   renderTrade: function (market) {
