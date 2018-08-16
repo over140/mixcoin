@@ -106,19 +106,28 @@
       list-style: none;
       height: 48px;
 
-      img {
+      .asset-icon {
         position: absolute;
-        top: 12px;
-        left: 16px;
-        width: 24px;
-        height: 24px;
+        top: 10px;
+        left: 12px;
+        width: 28px;
+        height: 28px;
+        vertical-align: middle;
+      }
+
+      .chain-icon {
+        position: absolute;
+        top: 30px;
+        left: 12px;
+        width: 8px;
+        height: 8px;
         vertical-align: middle;
       }
 
       .name {
         position: absolute;
         top: 10px;
-        left: 52px;
+        left: 54px;
         color: #000000;
         letter-spacing: 1px;
         line-height: 1;
@@ -127,7 +136,7 @@
       .price {
         position: absolute;
         bottom: 10px;
-        left: 52px;
+        left: 54px;
         color: #cccccc;
         font-size: 9px;
       }

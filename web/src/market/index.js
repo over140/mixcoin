@@ -145,11 +145,16 @@ Market.prototype = {
           const baseAsset = resp.data[j];
 
           if (self.validateQuoteBase(baseAsset.asset_id, quoteAsset.asset_id)) {
+            const chainAsset = self.api.asset.getChainById(baseAsset.chain_id);
+            if (!chainAsset) {
+              continue;
+            }
             const isFavorited = self.isFavoritedPair(baseAsset.asset_id, quoteAsset.asset_id);
             if (isFavorited) {
               const starItemMark = self.itemMarket({
                 base: baseAsset,
                 quote: quoteAsset,
+                chain: chainAsset,
                 volume: 0,
                 price: 0,
                 change: 0
@@ -160,6 +165,7 @@ Market.prototype = {
             const itemMark = self.itemMarket({
               base: baseAsset,
               quote: quoteAsset,
+              chain: chainAsset,
               volume: 0,
               price: 0,
               change: 0

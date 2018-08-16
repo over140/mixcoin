@@ -1,6 +1,7 @@
 function Asset(api) {
   this.api = api;
-  this.assets = require('./assets.json');
+  this.chainAssets = require('./assets.json');
+  this.assets = this.chainAssets;
   this.btcAsset = this.getBySym('BTC');
   this.xinAsset = this.getBySym('XIN');
   this.usdtAsset = this.getBySym('USDT');
@@ -19,6 +20,16 @@ Asset.prototype = {
       const asset = this.getById(cancelAssets[i]);
       if (asset && parseFloat(asset.balance) > 0.00000001) {
         return asset;
+      }
+    }
+    return undefined;
+  },
+
+  getChainById: function (id) {
+    var assets = this.chainAssets;
+    for (var i = 0; i < assets.length; i++) {
+      if (assets[i].asset_id === id) {
+        return assets[i];
       }
     }
     return undefined;
