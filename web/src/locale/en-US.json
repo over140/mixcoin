@@ -13,7 +13,8 @@
       "403": "Access denied.",
       "500": "Internal server error.",
       "10001": "Internal server error.",
-      "10002": "Invalid data."
+      "10002": "Invalid data.",
+      "asset_access_denied": "Mixcoin need access to your assets, please reauthorize."
     }
   },
   "orders": {
@@ -28,7 +29,7 @@
     "insufficient.balance": "Please keep some OOO or CNB or NXC or CANDY token to cancel the order."
   },
   "home": {
-    "headline": "An open source decentralized exchange to trade all digital assets.",
+    "headline": "An open source decentralized exchange to trade all digital assets with your wallet.",
     "sign.up": "Sign Up",
     "log.in": "Log In",
     "link.api": "API Reference",

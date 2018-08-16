@@ -41,6 +41,22 @@ Market.prototype = {
     const self = this;
     self.api.mixin.assets(function (resp) {
       if (resp.error) {
+        if (resp.error.code === 403) {
+          $('#layout-container').html(self.templateIndex({
+            title: "CNB-USDT",
+            logoURL: require('./logo.png'),
+            symbolURL: require('./symbol.png')
+          }));
+
+          $('.action.ok').on('click', function () {
+            self.api.account.clear();
+            var obj = new URL(window.location);
+            var returnTo = encodeURIComponent(obj.href.substr(obj.origin.length));
+            window.location.replace('https://mixin.one/oauth/authorize?client_id=' + CLIENT_ID + '&scope=PROFILE:READ+ASSETS:READ&response_type=code&return_to=' + returnTo);
+          });
+
+          self.alertError(window.i18n.t('general.errors.asset_access_denied'));
+        }
         return;
       }
 
@@ -49,15 +65,45 @@ Market.prototype = {
         return filterPatt.test(asset.symbol)
       });
 
+      resp.data.sort(function (a, b) {
+        var at = parseFloat(a.price_usd) * parseFloat(a.balance);
+        var bt = parseFloat(b.price_usd) * parseFloat(b.balance);
+        if (at > bt) {
+          return -1;
+        }
+        if (at < bt) {
+          return 1;
+        }
+        if (a.symbol < b.symbol) {
+          return -1;
+        }
+        if (a.symbol > b.symbol) {
+          return 1;
+        }
+        return 0;
+      });
+
       self.api.asset.assets = resp.data;
 
-      const quotes = [self.api.asset.usdtAsset, self.api.asset.btcAsset, self.api.asset.xinAsset]
-
       $('#layout-container').html(self.templateIndex({
-        title: "CNB-USDT",
+        title: "BTC-USDT",
         logoURL: require('./logo.png'),
         symbolURL: require('./symbol.png')
       }));
+
+      var baseAssetId = window.localStorage.getItem('market.default.base');
+      var quoteAssetId = window.localStorage.getItem('market.default.quote');
+      if (!baseAssetId || baseAssetId === '') {
+        baseAssetId = self.api.asset.btcAsset.asset_id;
+      }
+      if (!quoteAssetId || quoteAssetId === '') {
+        quoteAssetId = self.api.asset.usdtAsset.asset_id;
+      }
+  
+      const baseAsset = self.api.asset.getById(baseAssetId);
+      const quoteAsset = self.api.asset.getById(quoteAssetId);
+
+      self.refreshTrade(baseAsset, quoteAsset);
 
       $('.nav.overlay .title').on('click', function (event) {
         var marketContainer = $('.layout.markets.container');
@@ -90,23 +136,7 @@ Market.prototype = {
 
       $('.usdt.markets').show();
 
-      resp.data.sort(function (a, b) {
-        var at = parseFloat(a.price_usd) * parseFloat(a.balance);
-        var bt = parseFloat(b.price_usd) * parseFloat(b.balance);
-        if (at > bt) {
-          return -1;
-        }
-        if (at < bt) {
-          return 1;
-        }
-        if (a.symbol < b.symbol) {
-          return -1;
-        }
-        if (a.symbol > b.symbol) {
-          return 1;
-        }
-        return 0;
-      });
+      const quotes = [self.api.asset.usdtAsset, self.api.asset.btcAsset, self.api.asset.xinAsset]
 
       for (var i = 0; i < 3; i++) {
         const quoteAsset = quotes[i];
@@ -179,19 +209,6 @@ Market.prototype = {
         $(".modal-container").hide();
       });
 
-      var baseAssetId = window.localStorage.getItem('market.default.base');
-      var quoteAssetId = window.localStorage.getItem('market.default.quote');
-      if (!baseAssetId || baseAssetId === '') {
-        baseAssetId = self.api.asset.btcAsset.asset_id;
-      }
-      if (!quoteAssetId || quoteAssetId === '') {
-        quoteAssetId = self.api.asset.usdtAsset.asset_id;
-      }
-  
-      const baseAsset = self.api.asset.getById(baseAssetId);
-      const quoteAsset = self.api.asset.getById(quoteAssetId);
-
-      self.refreshTrade(baseAsset, quoteAsset);
       self.router.updatePageLinks();
     });
   },
