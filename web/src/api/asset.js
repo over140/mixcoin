@@ -25,11 +25,20 @@ Asset.prototype = {
   },
 
   getById: function (id) {
-    var assets = this.assets;
-    for (var i = 0; i < assets.length; i++) {
-      if (assets[i].asset_id === id) {
-        return assets[i];
-      }
+    switch (id) {
+      case this.btcAsset.asset_id:
+        return this.btcAsset;
+      case this.xinAsset.asset_id:
+        return this.xinAsset;
+      case this.usdtAsset.asset_id:
+        return this.usdtAsset;
+      default:
+        var assets = this.assets;
+        for (var i = 0; i < assets.length; i++) {
+          if (assets[i].asset_id === id) {
+            return assets[i];
+          }
+        } 
     }
     return undefined;
   },
