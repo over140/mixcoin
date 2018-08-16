@@ -11,7 +11,7 @@ const extractSass = new ExtractTextPlugin({
 
 const webRoot = function (env) {
   if (env === 'production') {
-    return 'http://ex.otcxin.one';
+    return 'https://mixcoin.one';
   } else {
     return 'http://wallet.exchange.local';
   }
