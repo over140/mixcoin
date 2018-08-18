@@ -18,7 +18,7 @@
     "jquery": "^3.3.1",
     "jsrsasign": "^8.0.12",
     "moment": "^2.22.2",
-    "msgpack-lite": "^0.1.26",
+    "msgpack5": "^4.2.0",
     "navigo": "^7.1.2",
     "node-forge": "^0.7.5",
     "node-polyglot": "^2.3.0",

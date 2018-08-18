@@ -56,7 +56,7 @@ Account.prototype = {
   
           const orderId = resp.data.trace_id;
           if (orderId) {
-            const msgpack = require("msgpack-lite");
+            const msgpack = require('msgpack5')();
             const uuidParse = require('uuid-parse');
             if (orderId) {
               self.handleOrderCancel(data.trace_id, msgpack.encode({"O": uuidParse.parse(orderId)}).toString('base64'));

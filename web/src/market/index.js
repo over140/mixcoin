@@ -421,14 +421,13 @@ Market.prototype = {
   },
 
   createMemo: function (data) {
-    const msgpack = require("msgpack-lite");
+    var msgpack = require('msgpack5')();
     const uuidParse = require('uuid-parse');
     var side = (data.side === 'BID' ? 'B' : 'A');
     var type = (data.type === 'LIMIT' ? 'L' : 'M');
-    var price = parseFloat(data.price).toFixed(8);
-    var asset = (data.side === 'BID' ? data.base : data.quote);
-    var order = data.trace_id;
-    return msgpack.encode({"T": type, "P": price, "S": side, "A": uuidParse.parse(asset)});
+    var price = (data.type === 'LIMIT' ? this.parseNumber(data.price).toFixed(8).replace(/\.?0+$/,"") : '0');
+    var asset = (data.side === 'BID' ? this.base.asset_id : this.quote.asset_id);
+    return msgpack.encode({'T': type, 'P': price, 'S': side, 'A': uuidParse.parse(asset)});
   },
 
   quotePrecision: function(assetId) {
@@ -468,11 +467,11 @@ Market.prototype = {
     if (data === undefined || data === "") {
       return new BigNumber(0);
     }
-    const value = parseFloat(data);
+    const value = new BigNumber(data);
     if (isNaN(value)) {
       return new BigNumber(0);
     }
-    return new BigNumber(value);
+    return value;
   },
 
   validateOrder: function(data) {
@@ -597,6 +596,7 @@ Market.prototype = {
       self.created_at = new Date();
       const traceId = data.trace_id;
       var url = 'pay?recipient=' + ENGINE_USER_ID + '&asset=' + assetId + '&amount=' + data.funds + '&memo=' + encodeURI(memo) + '&trace=' + traceId;
+      console.info('url:' + url);
       clearInterval(self.paymentInterval);
       var verifyTrade = function() {
         self.api.mixin.verifyTrade(function (resp) {
