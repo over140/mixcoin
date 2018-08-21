@@ -21,6 +21,10 @@ Account.prototype = {
     $('.cancel.order.form :submit').prop('disabled', false);
   },
 
+  encode: function (buffer) {
+    return buffer.toString('base64').replace(/\+/g, '-').replace(/\//g, '_');
+  },
+
   orders: function () {
     const self = this;
     
@@ -59,7 +63,7 @@ Account.prototype = {
             const msgpack = require('msgpack5')();
             const uuidParse = require('uuid-parse');
             if (orderId) {
-              self.handleOrderCancel(data.trace_id, msgpack.encode({"O": uuidParse.parse(orderId)}).toString('base64'));
+              self.handleOrderCancel(data.trace_id, self.encode(msgpack.encode({"O": uuidParse.parse(orderId)})));
               return;
             }
             self.api.notify('error', window.i18n.t('invalid.transaction.id'));

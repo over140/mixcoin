@@ -420,6 +420,10 @@ Market.prototype = {
     });
   },
 
+  encode: function (buffer) {
+    return buffer.toString('base64').replace(/\+/g, '-').replace(/\//g, '_');
+  },
+
   createMemo: function (data) {
     var msgpack = require('msgpack5')();
     const uuidParse = require('uuid-parse');
@@ -587,15 +591,15 @@ Market.prototype = {
       
       var assetId = (data.side === 'BID' ? data.quote : data.base);
       var redirect_to;
-      var memo = self.createMemo(data).toString('base64');
-
+      var memo = self.encode(self.createMemo(data));
+      
       if (self.mixin.environment() == undefined) {
         redirect_to = window.open("");
       }
       
       self.created_at = new Date();
       const traceId = data.trace_id;
-      var url = 'pay?recipient=' + ENGINE_USER_ID + '&asset=' + assetId + '&amount=' + data.funds + '&memo=' + encodeURI(memo) + '&trace=' + traceId;
+      var url = 'pay?recipient=' + ENGINE_USER_ID + '&asset=' + assetId + '&amount=' + data.funds + '&memo=' + memo + '&trace=' + traceId;
       console.info('url:' + url);
       clearInterval(self.paymentInterval);
       var verifyTrade = function() {
