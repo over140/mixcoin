@@ -101,7 +101,10 @@ Market.prototype = {
         quoteAssetId = self.api.asset.usdtAsset.asset_id;
       }
   
-      const baseAsset = self.api.asset.getById(baseAssetId);
+      var baseAsset = self.api.asset.getById(baseAssetId);
+      if (baseAsset === undefined) {
+        baseAsset = self.api.asset.getById(self.api.asset.btcAsset.asset_id);
+      }
       const quoteAsset = self.api.asset.getById(quoteAssetId);
 
       self.refreshTrade(baseAsset, quoteAsset);
