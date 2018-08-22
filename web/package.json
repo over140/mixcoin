@@ -1,5 +1,5 @@
 {
-  "name": "MixCoin",
+  "name": "mixcoin",
   "version": "1.0.0",
   "description": "MixCoin cache layer Web interface.",
   "main": "app.js",
