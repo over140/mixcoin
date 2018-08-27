@@ -9,22 +9,6 @@ function Asset(api) {
 
 Asset.prototype = {
 
-  getCancelOrderAsset: function () {
-    const oooAssetId = "de5a6414-c181-3ecc-b401-ce375d08c399";
-    const cnbAssetId = "965e5c6e-434c-3fa9-b780-c50f43cd955c";
-    const nxcAssetId = "66152c0b-3355-38ef-9ec5-cae97e29472a";
-    const candyAssetId = "01c46685-f6b0-3c16-95c1-b3d9515e2c9f";
-
-    const cancelAssets = [oooAssetId, cnbAssetId, nxcAssetId, candyAssetId];
-    for (var i = 0; i < cancelAssets.length; i++) {
-      const asset = this.getById(cancelAssets[i]);
-      if (asset && parseFloat(asset.balance) > 0.00000001) {
-        return asset;
-      }
-    }
-    return undefined;
-  },
-
   getChainById: function (id) {
     var assets = this.chainAssets;
     for (var i = 0; i < assets.length; i++) {

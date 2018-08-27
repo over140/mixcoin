@@ -34,6 +34,12 @@ Mixin.prototype = {
     });
   },
 
+  snapshots: function (callback, offset) {
+    this.api.requestMixin('GET', 'https://api.mixin.one/snapshots?limit=500&offset=' + offset, undefined, function (resp) {
+      return callback(resp);
+    });
+  },
+
   verifyTrade: function(callback, trace) {
     this.api.requestMixin('GET', 'https://api.mixin.one/transfers/trace/'+trace, undefined, function(resp) {
       return callback(resp);

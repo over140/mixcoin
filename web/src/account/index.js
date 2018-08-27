@@ -3,14 +3,17 @@ import $ from 'jquery';
 import 'intl-tel-input/build/css/intlTelInput.css';
 import 'intl-tel-input';
 import uuid from 'uuid/v4';
-import FormUtils from '../utils/form.js';
 import Mixin from '../api/mixin.js';
+import {BigNumber} from 'bignumber.js';
+import TimeUtils from '../utils/time.js';
 
 function Account(router, api) {
   this.router = router;
   this.api = api;
   this.templateOrders = require('./orders.html');
+  this.itemOrder = require('./order_item.html');
   this.mixin = new Mixin(this);
+  this.assets = {};
 }
 
 Account.prototype = {
@@ -25,115 +28,385 @@ Account.prototype = {
     return buffer.toString('base64').replace(/\+/g, '-').replace(/\//g, '_');
   },
 
-  orders: function () {
-    const self = this;
-    
-    self.api.mixin.assets(function (resp) {
+  decode: function (base64) {
+    return new Buffer(base64.replace(/\-/g, '+').replace(/\_/g, '/'), 'base64');
+  },
+
+  isOrderMemo: function (base64) {
+    return /^([0-9a-zA-Z+/]{4})*(([0-9a-zA-Z+/]{2}==)|([0-9a-zA-Z+/]{3}=))?$/.test(base64.replace(/\-/g, '+').replace(/\_/g, '/'));
+  },
+
+  fetchAssets: function (callback) {
+    this.api.mixin.assets(function (resp) {
       if (resp.error) {
         return;
       }
 
-      self.api.asset.assets = resp.data;
+      var assets = {};
+      for (var i = 0; i < resp.data.length; i++) {
+        const asset = resp.data[i];
+        assets[asset.asset_id] = asset;
+      }
 
-      $('body').attr('class', 'account layout');
-      $('#layout-container').html(self.templateOrders({
-        guideURL: require('./cancel_guide.png'),
-        trace: uuid().toLowerCase()
-      }));
-  
-      $('.cancel.order.form').submit(function (event) {
-        event.preventDefault();
-        var form = $(this);
-        var data = FormUtils.serialize(form);
-  
-        if (data.snapshot_id === "") {
-          self.hideLoader();
+      callback(assets);
+    });
+  },
+
+  decodeArray: function (uuidParse, buf, offset, length, headerLength) {
+    var result = []
+    var i
+    var totalBytesConsumed = 0
+
+    offset += headerLength
+    for (i = 0; i < length; i++) {
+      var decodeResult = this.tryDecode(uuidParse, buf, offset)
+      if (decodeResult) {
+        result.push(decodeResult.value)
+        offset += decodeResult.length
+        totalBytesConsumed += decodeResult.length
+      } else {
+        return null
+      }
+    }
+    return { value: uuidParse.unparse(result), length: headerLength + totalBytesConsumed }
+  },
+
+  tryDecode: function (uuidParse, buf, offset) {
+    offset = offset === undefined ? 0 : offset
+    var bufLength = buf.length - offset
+    if (bufLength <= 0) {
+      return null;
+    }
+
+    var type = buf.readUInt8(offset);
+    switch (type) {
+      case 0xc0:
+      return { value: null, length: 1 };
+      case 0xc2:
+        return { value: false, length: 1 };
+      case 0xc3:
+        return { value: true, length: 1 };
+      case 0xcc:  // 1-byte unsigned int
+        return { value: buf.readUInt8(offset + 1), length: 2 };
+      case 0xcd:  // 2-bytes BE unsigned int
+        return { value: buf.readUInt16BE(offset + 1), length: 3 };
+      case 0xce:  // 4-bytes BE unsigned int
+        return { value: buf.readUInt32BE(offset + 1), length: 5 };
+      case 0xd0:  // 1-byte signed int
+        return { value: buf.readInt8(offset + 1), length: 2 };
+      case 0xd1:
+        return { value: buf.readInt16BE(offset + 1), length: 3 };
+      case 0xd2:
+        return { value: buf.readInt32BE(offset + 1), length: 5 };
+      case 0xd9:  // strings up to 2^8 - 1 bytes
+        length = buf.readUInt8(offset + 1);
+        return { value: buf.toString('utf8', offset + 2, offset + 2 + length), length: length };
+      case 0xda:  // strings up to 2^16 - 2 bytes
+        length = buf.readUInt16BE(offset + 1)
+        return { value: buf.toString('utf8', offset + 3, offset + 3 + length), length: length };
+      case 0xdb:  // strings up to 2^32 - 4 bytes
+        length = buf.readUInt32BE(offset + 1);
+        return { value: buf.toString('utf8', offset + 5, offset + 5 + length), length: length };
+      case 0xdc:
+        length = buf.readUInt16BE(offset + 1)
+        return this.decodeArray(uuidParse, buf, offset, length, 3);
+      case 0xb0:
+        length = buf.readUInt16BE(offset + 1);
+        return { value: uuidParse.unparse(buf.slice(offset + 1, offset + 1 + 16)), length: 16 + 1 };
+      default:
+        if ((type & 0xf0) === 0x90) {
+          length = type & 0x0f;
+          return this.decodeArray(uuidParse, buf, offset, length, 1);
+        } else if ((type & 0xf0) === 0x80) {
+          length = type & 0x0f;
+          return self.decodeMap(uuidParse, buf, offset, length, 1);
+        } else if ((type & 0xe0) === 0xa0) {
+          length = type & 0x1f
+          return { value: buf.toString('utf8', offset + 1, offset + length + 1), length: length + 1 };
+        } else if (type >= 0xe0) {
+          return { value: type - 0x100, length: 1 };
+        } else if (type < 0x80) {
+          return { value: type, length: 1 };
+        }
+        break;
+    }
+    return null;
+  },
+
+  decodeMap: function (buf, offset, length, headerLength) {
+    var result = {};
+    offset += headerLength;
+
+    const uuidParse = require('uuid-parse');
+
+    for (var i = 0; i < length; i++) {
+      const key = this.tryDecode(uuidParse, buf, offset);
+      if (key) {
+        offset += key.length;
+        const value = this.tryDecode(uuidParse, buf, offset);
+        if (value) {
+          result[key.value] = value.value;
+          offset += value.length;
+        }
+      }
+    }
+
+    return result
+  },
+
+  decodeMemo: function(memo) {
+    const buf = this.decode(memo);
+    return this.decodeMap(buf, 0, buf.readUInt8(0) & 0x0f, 1);
+  },
+
+  orders: function () {
+    const self = this;
+    self.fetchAssets(function (assets) {
+
+      self.assets = assets;
+      self.api.mixin.snapshots(function (resp) {
+        if (resp.error) {
+          self.api.notifyError('error', resp.error);
           return;
         }
-       
-        self.api.mixin.snapshot(function (resp) {
+  
+        resp.data = resp.data.filter(function(snapshot) {
+          return snapshot.memo !== '' && snapshot.memo !== undefined
+        });
+  
+        var orders = {};
+  
+        for (var i = 0; i < resp.data.length; i++) {
+          const snapshot = resp.data[i];
+          if (!self.isOrderMemo(snapshot.memo)) {
+            continue;
+          }
+          const amount = new BigNumber(snapshot.amount);
+          const orderAction = self.decodeMemo(snapshot.memo);
+          if (!orderAction) {
+            continue;
+          }
+
+          if (amount.isNegative()) {
+            if (orderAction && !orderAction.O && orderAction.T) {
+              var order = orders[snapshot.trace_id];
+              if (!order) {
+                order = {};
+                order.state = 'PENDING';
+              }
+              if (orderAction.S === 'B') {
+                order.quote = assets[orderAction.A];
+                order.base = assets[snapshot.asset_id];
+              } else {
+                order.quote = assets[snapshot.asset_id];
+                order.base = assets[orderAction.A];
+              }
+
+              if (orderAction.T === 'M' && orderAction.S === 'A') {
+                order.amount_symbol = order.base.symbol;
+              } else {
+                if (order.quote) {
+                  order.amount_symbol = order.quote.symbol;
+                } else {
+                  order.amount_symbol = '???'
+                }
+              }
+
+              if (orderAction.T === 'L') {
+                order.price = orderAction.P.replace(/\.?0+$/,"");
+                if (order.base) {
+                  order.price_symbol = order.base.symbol;
+                } else {
+                  order.price_symbol = '???'
+                }
+              }
+              
+              order.type = orderAction.T;
+              order.side = orderAction.S === 'B' ? 'Buy' : 'Sell';
+              order.sideLocale = orderAction.S === 'B' ? window.i18n.t('market.form.buy') : window.i18n.t('market.form.sell');
+              order.created_at = TimeUtils.short(snapshot.created_at);
+              order.amount = amount.abs();
+              order.order_id = snapshot.trace_id;
+              order.trace = uuid().toLowerCase();
+
+              orders[snapshot.trace_id] = order;
+            }
+          } else {
+            if (!orderAction.S) {
+              continue;
+            }
+            switch (orderAction.S) {
+              case 'FILL':
+              case 'REFUND':
+              case 'CANCEL':
+                const orderId = orderAction.O;
+                var order = orders[orderId];
+                if (!order) {
+                  order = {};
+                }
+                order.state = 'DONE';
+                orders[orderId] = order;
+                break;
+              case 'MATCH':
+                const askOrderId = orderAction.A;
+                const bidOrderId = orderAction.B;
+  
+                var askOrder = orders[askOrderId];
+                if (!askOrder) {
+                  askOrder = {};
+                }
+                if (askOrder.state !== 'DONE') {
+                  if (!askOrder.filled_amount) {
+                    askOrder.filled_amount = new BigNumber(0);
+                  }
+                  askOrder.filled_amount.plus(amount.abs());
+                }
+                orders[askOrderId] = askOrder;
+  
+                var bidOrder = orders[bidOrderId];
+                if (!bidOrder) {
+                  bidOrder = {};
+                }
+                if (bidOrder.state !== 'DONE') {
+                  if (!bidOrder.filled_amount) {
+                    bidOrder.filled_amount = new BigNumber(0);
+                  }
+                  bidOrder.filled_amount.plus(amount.abs());
+                }
+                orders[bidOrderId] = bidOrder;
+                break;
+            }
+          }
+        }
+  
+        var orderArray = [];
+        for (var i = 0; i < resp.data.length; i++) {
+          const snapshot = resp.data[i];
+          const amount = new BigNumber(snapshot.amount);
+          if (amount.isNegative()) {
+            const order = orders[snapshot.trace_id];
+            if (order) {
+              orderArray.push(order)
+            }
+          }
+        }
+        self.orders = orderArray;
+  
+        $('body').attr('class', 'account layout');
+        $('#layout-container').html(self.templateOrders({
+          guideURL: require('./cancel_guide.png')
+        }));
+
+        self.orderFilterType = 'L';
+        self.orderFilterState = 'PENDING';
+        self.filterOrders();
+
+        $('#orders-type').on('change', function() {
+          self.orderFilterType = $(this).val();
+          self.filterOrders();
+        });
+        $('#orders-status').on('change', function() {
+          self.orderFilterState = $(this).val();
+          self.filterOrders();
+        });
+
+        self.router.updatePageLinks();
+
+      });
+
+    });
+  },
+
+  filterOrders: function () {
+    const type = this.orderFilterType;
+    const state = this.orderFilterState;
+    const orders = this.orders.filter(function(order) {
+      return order.type === type && order.state === state;
+    });
+
+    $('#orders-content').html(this.itemOrder({
+      canCancel: type === 'L' && state === 'PENDING',
+      orders: orders
+    }));
+
+    this.handleOrderCancel();
+  },
+
+  getCancelOrderAsset: function () {
+    const oooAssetId = "de5a6414-c181-3ecc-b401-ce375d08c399";
+    const cnbAssetId = "965e5c6e-434c-3fa9-b780-c50f43cd955c";
+    const nxcAssetId = "66152c0b-3355-38ef-9ec5-cae97e29472a";
+    const candyAssetId = "01c46685-f6b0-3c16-95c1-b3d9515e2c9f";
+
+    const cancelAssets = [oooAssetId, cnbAssetId, nxcAssetId, candyAssetId];
+    for (var i = 0; i < cancelAssets.length; i++) {
+      const asset = this.assets[cancelAssets[i]];
+      if (asset && parseFloat(asset.balance) > 0.00000001) {
+        return asset;
+      }
+    }
+    return undefined;
+  },
+
+  handleOrderCancel: function () {
+    const self = this;
+    $('.orders.list .cancel.action a').click(function () {
+      var item = $(this).parents('.order.item');
+      const orderId = $(item).attr('data-id');
+      const traceId = $(item).attr('trace-id');
+
+      const asset = self.getCancelOrderAsset();
+      if (!asset) {
+        self.api.notify('error', window.i18n.t('invalid.insufficient.balance'));
+        return;
+      }  
+
+      const msgpack = require('msgpack5')();
+      const uuidParse = require('uuid-parse');
+      const memo = self.encode(msgpack.encode({"O": uuidParse.parse(orderId)}));
+
+      var redirect_to;
+      var url = 'pay?recipient=' + ENGINE_USER_ID + '&asset=' + asset.asset_id + '&amount=0.00000001&memo=' + memo + '&trace=' + traceId;
+  
+      if (self.mixin.environment() == undefined) {
+        redirect_to = window.open("");
+      }
+      
+      self.created_at = new Date();
+      
+      clearInterval(self.paymentInterval);
+      var verifyTrade = function() {
+        self.api.mixin.verifyTrade(function (resp) {
+          if ((new Date() - self.created_at) > 60 * 1000) {
+            if (redirect_to != undefined) {
+              redirect_to.close();
+            }
+            window.location.reload();
+            return
+          }
           if (resp.error) {
-            self.api.notify('error', window.i18n.t('orders.invalid.transaction.id') + ' Error Code:' + resp.error.code);
-            self.hideLoader();
+            console.info(resp.error)
             return true;
           }
   
-          const orderId = resp.data.trace_id;
-          if (orderId) {
-            const msgpack = require('msgpack5')();
-            const uuidParse = require('uuid-parse');
-            if (orderId) {
-              self.handleOrderCancel(data.trace_id, self.encode(msgpack.encode({"O": uuidParse.parse(orderId)})));
-              return;
-            }
-            self.api.notify('error', window.i18n.t('invalid.transaction.id'));
-            self.hideLoader();
-          }
-        }, data.snapshot_id);
-      });
-      $('.cancel.order.form :submit').click(function (event) {
-        event.preventDefault();
-        $(this).hide();
-        $(this).prop('disabled', true);
-        var form = $(this).parents('form');
-        $('.submit-loader', form).show();
-        form.submit();
-      });
-    });
-    
-  },
+          $(item).fadeOut().remove();
 
-  handleOrderCancel: function (trace, memo) {
-    const self = this;
-
-    const asset = this.api.asset.getCancelOrderAsset();
-    if (!asset) {
-      self.api.notify('error', window.i18n.t('invalid.insufficient.balance'));
-      return;
-    }
-
-    var redirect_to;
-    var url = 'pay?recipient=' + ENGINE_USER_ID + '&asset=' + asset.asset_id + '&amount=0.00000001&memo=' + encodeURI(memo) + '&trace=' + trace;
-
-    if (self.mixin.environment() == undefined) {
-      redirect_to = window.open("");
-    }
-    
-    self.created_at = new Date();
-    
-    clearInterval(self.paymentInterval);
-    var verifyTrade = function() {
-      self.api.mixin.verifyTrade(function (resp) {
-        if ((new Date() - self.created_at) > 60 * 1000) {
+          const data = resp.data;
           if (redirect_to != undefined) {
             redirect_to.close();
           }
-          window.location.reload();
-          return
-        }
-        if (resp.error) {
-          console.info(resp.error)
-          return true;
-        }
-
-        const data = resp.data;
-        if (redirect_to != undefined) {
-          redirect_to.close();
-        }
-
-        clearInterval(self.paymentInterval);
-        
-        self.hideLoader();
-        $('.cancel.order.form input[name="trace_id"]').val(uuid().toLowerCase());
-      }, trace);
-    }
-    self.paymentInterval = setInterval(function() { verifyTrade(); }, 3000);
-
-    if (self.mixin.environment() == undefined) {
-      redirect_to.location = 'https://mixin.one/' + url;
-    } else {
-      window.location.replace('mixin://' + url);
-    }
+  
+          clearInterval(self.paymentInterval);
+        }, traceId);
+      }
+      self.paymentInterval = setInterval(function() { verifyTrade(); }, 3000);
+  
+      if (self.mixin.environment() == undefined) {
+        redirect_to.location = 'https://mixin.one/' + url;
+      } else {
+        window.location.replace('mixin://' + url);
+      }
+    });
   }
 };
 

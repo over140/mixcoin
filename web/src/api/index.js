@@ -129,6 +129,19 @@ API.prototype = {
     }
   },
 
+  notifyError: function(type, error) {
+    var errorInfo = '';
+    if (error.description) {
+      errorInfo += error.description;
+    }
+    if (error.code) {
+      errorInfo += ' ' + error.code;
+    }
+    if (errorInfo !== '') {
+      this.notify('error', errorInfo);
+    }
+  },
+
   notify: function(type, text) {
     new Noty({
       type: type,

@@ -2,47 +2,127 @@
 
 .account.layout {
 
-  .management.container {
+  .orders.container {
     width: 100%;
     max-width: 640px;
     margin: 0 auto;
     box-sizing: border-box;
-    padding: 0 16px;
-
-    img {
-      width: 60%;
-    }
-
-    .mixin.order.button a {
-      display: inline-block;
-      text-decoration: none;
-      background: $color-main-highlight;
-      box-shadow: 0 0 4px rgba(0,0,0,0.3);
-      border-radius: 4px;
-      color: $color-main-background;
-      font-size: 20px;
-      padding: 12px 32px;
-      margin: 32px 0 16px;
-    }
-  
-    .mixin.order {
-      text-align: left;
-      line-height: 1.5em;
-  
-      div {
-        margin-bottom: 16px;
-      }
-  
-      input {
-        margin: 16px 0;
-      }
-  
-      input[type="text"] {
-        font-size: 20px;
-        letter-spacing: 2px;
-      }
-    }
+    padding: 0 8px;
   }
   
+  .navi {
+    text-align: right;
+    .item {
+      border: 1px solid rgba(0,0,0,0.1);
+      border-radius: 2px;
+      color: #000;
+      display: inline-block;
+      padding: 0.3rem 0.6rem;
+      margin-left: 0.8rem;
+      &.active, &:hover {
+        background-color: rgba(0,0,0,0.05);
+      }
+    }
 
+    select {
+      width: auto;
+      border: solid 1px #B9B9B9;
+      appearance:none;
+      -moz-appearance:none;
+      -webkit-appearance:none;
+      // background: url("http://ourjs.github.io/static/2015/arrow.png") no-repeat scroll right center transparent;
+      padding: 8px 24px 8px 24px;
+      margin: 12px 6px;
+    }
+
+    option{
+      text-align:center;
+    }
+  }
+
+  .orders.list {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    max-width: 640px;
+    margin: 0 auto;
+    box-sizing: border-box;
+    padding: 0 16px;
+  
+    thead {
+      display: table-header-group;
+      vertical-align: middle;
+      border-top: 1px solid rgba(0,0,0,0.05);
+    }
+  
+    tbody {
+      display: table-row-group;
+      vertical-align: middle;
+      font-family: $font-main-mono;
+    }
+  
+    th, td {
+      text-align: right;
+      padding: 16px 0;
+  
+      // &:first-child {
+      //   text-align: left;
+      // }
+    }
+  
+    th {
+      cursor: pointer;
+      text-transform: uppercase;
+      font-weight: 500;
+    }
+  
+    tr {
+      border-bottom: 1px solid rgba(0,0,0,0.05);
+  
+      &:last-child {
+        border-bottom: none;
+      }
+    }
+  
+    thead {
+      border-bottom: 1px solid rgba(0,0,0,0.05);
+    }
+  
+    td {
+      line-height: 20px;
+      word-wrap: break-word;
+  
+      .sub {
+        font-size: 90%;
+        opacity: 0.3;
+      }
+    }
+
+    .symbol {
+      margin-left: 2px
+    }
+  
+    .Sell.side {
+      color: $color-side-ask;
+    }
+  
+    .Buy.side {
+      color: $color-side-bid;
+    }
+  
+    .filled {
+      opacity: 0.3;
+      margin-left: 4px;
+      font-size: 80%;
+      font-weight: 300;
+    }
+  
+    .cancel.action a {
+      color: $color-main-foreground-light;
+      font-size: 10px;
+      border: solid 1px #B9B9B9;
+      border-radius: 4px;
+      padding: 6px 12px;
+    }
+  }
 }

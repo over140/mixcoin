@@ -1,0 +1,28 @@
+
+<thead>
+    <tr>
+        <td>{{t 'orders.table.price'}}</td>
+        <td>{{t 'orders.table.volume'}}</td>
+        <td>{{t 'orders.table.time'}}</td>
+        {{#if canCancel}}
+        <td>{{t 'orders.table.operation'}}</td>
+        {{/if}}
+    </tr>
+</thead>
+<tbody>
+    {{#each orders}}
+    <tr class="order item" data-id="{{this.order_id}}" trace-id="{{this.trace}}">
+        <td>
+        <span>{{this.price}}</span><span class="symbol">{{this.price_symbol}}</span>
+        <br/>
+        <span class="{{this.side}} side">●</span><span class="sub">{{this.sideLocale}}</span></td>
+        <td>
+        <span>{{this.amount}}</span><span class="symbol">{{this.amount_symbol}}</span><span class="filled">{{this.filled_amount}}</span>
+        </td>
+        <td>{{this.created_at}}</td>
+        {{#if ../canCancel}}
+        <td class="cancel action"><a href="javascript:void(0);">{{t 'orders.cancel'}}</a></td>
+        {{/if}}
+    </tr>
+    {{/each}}
+</tbody>
