@@ -317,33 +317,38 @@ Market.prototype = {
       $('.trade.form input[name="price"]').val($(this).data('price'));
     });
 
-    $('.charts.container').on('click', '.icon-minus', function (e) {
-      e.preventDefault();
-      $('.charts.container .icon').removeClass('disabled');
-      if (self.depthLevel <= -0.5) {
-        $(this).addClass('disabled');
-        return;
-      }
-      self.depthLevel -= 0.1;
-      if (self.depthChart) {
-        self.depthChart.destroy();
-        self.depthChart = new Chart().renderDepth($('.depth.chart')[0], self.book.bids, self.book.asks, self.depthLevel);
-      }
-    });
-
-    $('.charts.container').on('click', '.icon-plus', function (e) {
-      e.preventDefault();
-      $('.charts.container .icon').removeClass('disabled');
-      if (self.depthLevel >= 0.5) {
-        $(this).addClass('disabled');
-        return;
-      }
-      self.depthLevel += 0.1;
-      if (self.depthChart) {
-        self.depthChart.destroy();
-        self.depthChart = new Chart().renderDepth($('.depth.chart')[0], self.book.bids, self.book.asks, self.depthLevel);
-      }
-    });
+    if (self.mixin.environment() == undefined) {
+      $('.charts.container').on('click', '.icon-minus', function (e) {
+        e.preventDefault();
+        $('.charts.container .icon').removeClass('disabled');
+        if (self.depthLevel <= -0.5) {
+          $(this).addClass('disabled');
+          return;
+        }
+        self.depthLevel -= 0.1;
+        if (self.depthChart) {
+          self.depthChart.destroy();
+          self.depthChart = new Chart().renderDepth($('.depth.chart')[0], self.book.bids, self.book.asks, self.depthLevel);
+        }
+      });
+  
+      $('.charts.container').on('click', '.icon-plus', function (e) {
+        e.preventDefault();
+        $('.charts.container .icon').removeClass('disabled');
+        if (self.depthLevel >= 0.5) {
+          $(this).addClass('disabled');
+          return;
+        }
+        self.depthLevel += 0.1;
+        if (self.depthChart) {
+          self.depthChart.destroy();
+          self.depthChart = new Chart().renderDepth($('.depth.chart')[0], self.book.bids, self.book.asks, self.depthLevel);
+        }
+      });
+    } else {
+      $('.charts.container .icon-minus').hide();
+      $('.charts.container .icon-plus').hide();
+    }
 
     self.handleOrderCreate();
     self.handleFormSwitch();
