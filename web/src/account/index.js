@@ -171,35 +171,33 @@ Account.prototype = {
         }
   
         resp.data = resp.data.filter(function(snapshot) {
-          return snapshot.memo !== '' && snapshot.memo !== undefined
+          return snapshot.memo !== '' && snapshot.memo !== undefined && self.isOrderMemo(snapshot.memo)
         });
   
         var orders = {};
+        var entryOrders = [];
   
         for (var i = 0; i < resp.data.length; i++) {
           const snapshot = resp.data[i];
-          if (!self.isOrderMemo(snapshot.memo)) {
-            continue;
-          }
-          const amount = new BigNumber(snapshot.amount);
-          const orderAction = self.decodeMemo(snapshot.memo);
-          if (!orderAction) {
-            continue;
-          }
-
+          var amount = new BigNumber(snapshot.amount);
           if (amount.isNegative()) {
+            const orderAction = self.decodeMemo(snapshot.memo);
             if (orderAction && !orderAction.O && orderAction.T) {
-              var order = orders[snapshot.trace_id];
-              if (!order) {
-                order = {};
-                order.state = 'PENDING';
-              }
+              entryOrders.push(snapshot.trace_id);
+              var order = {};
+              order.state = 'PENDING';
+
               if (orderAction.S === 'B') {
                 order.quote = assets[orderAction.A];
                 order.base = assets[snapshot.asset_id];
               } else {
                 order.quote = assets[snapshot.asset_id];
                 order.base = assets[orderAction.A];
+              }
+              order.assetId = orderAction.A;
+
+              if (orderAction.T === 'L' && orderAction.S === 'B') {
+                amount = amount.div(new BigNumber(orderAction.P));
               }
 
               if (orderAction.T === 'M' && orderAction.S === 'A') {
@@ -231,63 +229,64 @@ Account.prototype = {
 
               orders[snapshot.trace_id] = order;
             }
-          } else {
-            if (!orderAction.S) {
-              continue;
-            }
-            switch (orderAction.S) {
-              case 'FILL':
-              case 'REFUND':
-              case 'CANCEL':
-                const orderId = orderAction.O;
-                var order = orders[orderId];
-                if (!order) {
-                  order = {};
-                }
-                order.state = 'DONE';
-                orders[orderId] = order;
-                break;
-              case 'MATCH':
-                const askOrderId = orderAction.A;
-                const bidOrderId = orderAction.B;
-  
-                var askOrder = orders[askOrderId];
-                if (!askOrder) {
-                  askOrder = {};
-                }
-                if (askOrder.state !== 'DONE') {
-                  if (!askOrder.filled_amount) {
-                    askOrder.filled_amount = new BigNumber(0);
+          }
+        }
+
+        for (var i = 0; i < resp.data.length; i++) {
+          const snapshot = resp.data[i];
+          const amount = new BigNumber(snapshot.amount);
+          if (amount.isPositive()) {
+            const orderAction = self.decodeMemo(snapshot.memo);
+            if (orderAction && orderAction.S) {
+              switch (orderAction.S) {
+                case 'FILL':
+                case 'REFUND':
+                case 'CANCEL':
+                  const orderId = orderAction.O;
+                  var order = orders[orderId];
+                  if (order) {
+                    order.filled_amount = undefined;
+                    order.state = 'DONE';
+                    orders[orderId] = order;
                   }
-                  askOrder.filled_amount.plus(amount.abs());
-                }
-                orders[askOrderId] = askOrder;
-  
-                var bidOrder = orders[bidOrderId];
-                if (!bidOrder) {
-                  bidOrder = {};
-                }
-                if (bidOrder.state !== 'DONE') {
-                  if (!bidOrder.filled_amount) {
-                    bidOrder.filled_amount = new BigNumber(0);
+                  break;
+                case 'MATCH':
+                  const askOrderId = orderAction.A;
+                  const bidOrderId = orderAction.B;
+
+                  var order = orders[askOrderId];
+                  if (!order || order.state === 'DONE' || order.assetId !== snapshot.asset_id) {
+                    order = orders[bidOrderId];
+                    if (!order || order.state === 'DONE' || order.assetId !== snapshot.asset_id) {
+                      break;
+                    }
                   }
-                  bidOrder.filled_amount.plus(amount.abs());
-                }
-                orders[bidOrderId] = bidOrder;
-                break;
+                  
+                  
+                  if (!order.filled_amount) {
+                    order.filled_amount = new BigNumber(0);
+                  }
+                  var fill_amount = amount;
+                  if (order.type === 'L' && order.side === 'Sell') {
+                    fill_amount = amount.div(new BigNumber(order.price));
+                  }
+                  order.filled_amount = order.filled_amount.plus(fill_amount.abs());
+                  if (order.filled_amount.multipliedBy(1.0011).isGreaterThanOrEqualTo(order.amount)) {
+                    order.filled_amount = undefined;
+                    order.state = 'DONE';
+                  }
+                  orders[order.order_id] = order;
+                  break;
+              } 
             }
           }
         }
   
         var orderArray = [];
-        for (var i = 0; i < resp.data.length; i++) {
-          const snapshot = resp.data[i];
-          const amount = new BigNumber(snapshot.amount);
-          if (amount.isNegative()) {
-            const order = orders[snapshot.trace_id];
-            if (order) {
-              orderArray.push(order)
-            }
+        for (var i = 0; i < entryOrders.length; i++) {
+          const order = orders[entryOrders[i]];
+          if (order) {
+            orderArray.push(order)
           }
         }
         self.orders = orderArray;
@@ -310,6 +309,14 @@ Account.prototype = {
           self.filterOrders();
         });
 
+        if (self.mixin.environment() == undefined) {
+          $('.header').on('click', '.account.sign.out.button', function () {
+            self.api.account.clear();
+            window.location.href = '/';
+          });
+        } else {
+          $('.account.sign.out.button').hide();
+        }
         self.router.updatePageLinks();
 
       });
