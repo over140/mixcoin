@@ -71,6 +71,73 @@ Account.prototype = {
     return { value: uuidParse.unparse(result), length: headerLength + totalBytesConsumed }
   },
 
+  getSize: function (first) {
+    switch (first) {
+      case 0xc4:
+        return 2
+      case 0xc5:
+        return 3
+      case 0xc6:
+        return 5
+      case 0xc7:
+        return 3
+      case 0xc8:
+        return 4
+      case 0xc9:
+        return 6
+      case 0xca:
+        return 5
+      case 0xcb:
+        return 9
+      case 0xcc:
+        return 2
+      case 0xcd:
+        return 3
+      case 0xce:
+        return 5
+      case 0xcf:
+        return 9
+      case 0xd0:
+        return 2
+      case 0xd1:
+        return 3
+      case 0xd2:
+        return 5
+      case 0xd3:
+        return 9
+      case 0xd4:
+        return 3
+      case 0xd5:
+        return 4
+      case 0xd6:
+        return 6
+      case 0xd7:
+        return 10
+      case 0xd8:
+        return 18
+      case 0xd9:
+        return 2
+      case 0xda:
+        return 3
+      case 0xdb:
+        return 5
+      case 0xde:
+        return 3
+      default:
+        return -1
+    }
+  },
+
+  hasMinBufferSize: function (first, length) {
+    var size = this.getSize(first)
+
+    if (size !== -1 && length < size) {
+      return false
+    } else {
+      return true
+    }
+  },
+
   tryDecode: function (uuidParse, buf, offset) {
     offset = offset === undefined ? 0 : offset
     var bufLength = buf.length - offset
@@ -79,6 +146,10 @@ Account.prototype = {
     }
 
     var type = buf.readUInt8(offset);
+    if (!this.hasMinBufferSize(type, bufLength)) {
+      return null
+    }
+
     switch (type) {
       case 0xc0:
       return { value: null, length: 1 };
