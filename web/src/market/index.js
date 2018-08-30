@@ -381,9 +381,9 @@ Market.prototype = {
     self.fetchTradesInterval = setTimeout(function() { fetchTrades(); }, 1000);
 
     clearInterval(self.candleInterval);
-    self.pollCandles(300);
+    self.pollCandles(3600);
     self.candleInterval = setInterval(function () {
-      self.pollCandles(300);
+      self.pollCandles(3600);
     }, 60000);
     self.handleCandleSwitch();
 
