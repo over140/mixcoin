@@ -9,9 +9,10 @@ import TimeUtils from '../utils/time.js';
 import Mixin from '../api/mixin.js';
 import {BigNumber} from 'bignumber.js';
 
-function Market(router, api) {
+function Market(router, api, db) {
   this.router = router;
   this.api = api;
+  this.db = db;
   this.templateIndex = require('./index.html');
   this.templateTrade = require('./trade.html');
   this.itemOrder = require('./order_item.html');
@@ -38,35 +39,58 @@ function Market(router, api) {
 
 Market.prototype = {
 
+  fetchAssets: function (callback) {
+    const self = this;
+    self.db.prepare(function () {
+      self.db.asset.fetchAssets(function (assets) {
+        const immediatelyReturn = assets.length > 0;
+        if (immediatelyReturn) {
+          self.db.asset.cache(assets);
+          callback(assets);
+        }
+        self.api.mixin.assets(function (resp) {
+          if (resp.error) {
+            if (resp.error.code === 403) {
+              $('#layout-container').html(self.templateIndex({
+                title: "CNB-USDT",
+                logoURL: require('./logo.png'),
+                symbolURL: require('./symbol.png')
+              }));
+    
+              $('.action.ok').on('click', function () {
+                self.api.account.clear();
+                var obj = new URL(window.location);
+                var returnTo = encodeURIComponent(obj.href.substr(obj.origin.length));
+                window.location.replace('https://mixin.one/oauth/authorize?client_id=' + CLIENT_ID + '&scope=PROFILE:READ+ASSETS:READ&response_type=code&return_to=' + returnTo);
+              });
+    
+              self.alertError(window.i18n.t('general.errors.asset_access_denied'));
+            }
+            return;
+          }
+  
+          const filterPatt = /^\w+$/;
+          resp.data = resp.data.filter(function(asset) {
+            return filterPatt.test(asset.symbol)
+          });
+  
+          self.db.asset.saveAssets(resp.data, function (assets) {
+            if (!immediatelyReturn) {
+              self.db.asset.cache(assets);
+              callback(assets);
+            }
+          });
+        });
+      });
+    });
+  },
+
   assets: function () {
     const self = this;
-    self.api.mixin.assets(function (resp) {
-      if (resp.error) {
-        if (resp.error.code === 403) {
-          $('#layout-container').html(self.templateIndex({
-            title: "CNB-USDT",
-            logoURL: require('./logo.png'),
-            symbolURL: require('./symbol.png')
-          }));
+    self.fetchAssets(function (assets) {
 
-          $('.action.ok').on('click', function () {
-            self.api.account.clear();
-            var obj = new URL(window.location);
-            var returnTo = encodeURIComponent(obj.href.substr(obj.origin.length));
-            window.location.replace('https://mixin.one/oauth/authorize?client_id=' + CLIENT_ID + '&scope=PROFILE:READ+ASSETS:READ&response_type=code&return_to=' + returnTo);
-          });
-
-          self.alertError(window.i18n.t('general.errors.asset_access_denied'));
-        }
-        return;
-      }
-
-      const filterPatt = /^\w+$/;
-      resp.data = resp.data.filter(function(asset) {
-        return filterPatt.test(asset.symbol)
-      });
-
-      resp.data.sort(function (a, b) {
+      const defaultIconUrl = 'https://images.mixin.one/yH_I5b0GiV2zDmvrXRyr3bK5xusjfy5q7FX3lw3mM2Ryx4Dfuj6Xcw8SHNRnDKm7ZVE3_LvpKlLdcLrlFQUBhds=s128';
+      assets.sort(function (a, b) {
         var at = parseFloat(a.price_usd) * parseFloat(a.balance);
         var bt = parseFloat(b.price_usd) * parseFloat(b.balance);
         if (at > bt) {
@@ -75,16 +99,22 @@ Market.prototype = {
         if (at < bt) {
           return 1;
         }
+
+        if (a.icon_url === defaultIconUrl && b.icon_url !== defaultIconUrl) {
+          return 1;
+        } else if (b.icon_url === defaultIconUrl && a.icon_url !== defaultIconUrl) {
+          return -1;
+        }
+
         if (a.symbol < b.symbol) {
           return -1;
         }
         if (a.symbol > b.symbol) {
           return 1;
         }
+
         return 0;
       });
-
-      self.api.asset.assets = resp.data;
 
       $('#layout-container').html(self.templateIndex({
         title: "BTC-USDT",
@@ -95,17 +125,17 @@ Market.prototype = {
       var baseAssetId = window.localStorage.getItem('market.default.base');
       var quoteAssetId = window.localStorage.getItem('market.default.quote');
       if (!baseAssetId || baseAssetId === '') {
-        baseAssetId = self.api.asset.btcAsset.asset_id;
+        baseAssetId = self.db.asset.btcAsset.asset_id;
       }
       if (!quoteAssetId || quoteAssetId === '') {
-        quoteAssetId = self.api.asset.usdtAsset.asset_id;
+        quoteAssetId = self.db.asset.usdtAsset.asset_id;
       }
   
-      var baseAsset = self.api.asset.getById(baseAssetId);
+      var baseAsset = self.db.asset.getById(baseAssetId);
       if (baseAsset === undefined) {
-        baseAsset = self.api.asset.getById(self.api.asset.btcAsset.asset_id);
+        baseAsset = self.db.asset.getById(self.db.asset.btcAsset.asset_id);
       }
-      const quoteAsset = self.api.asset.getById(quoteAssetId);
+      const quoteAsset = self.db.asset.getById(quoteAssetId);
 
       self.refreshTrade(baseAsset, quoteAsset);
 
@@ -140,16 +170,16 @@ Market.prototype = {
 
       $('.usdt.markets').show();
 
-      const quotes = [self.api.asset.usdtAsset, self.api.asset.btcAsset, self.api.asset.xinAsset]
+      const quotes = [self.db.asset.usdtAsset, self.db.asset.btcAsset, self.db.asset.xinAsset]
 
       for (var i = 0; i < 3; i++) {
         const quoteAsset = quotes[i];
 
-        for (var j = 0; j < resp.data.length; j++) {
-          const baseAsset = resp.data[j];
+        for (var j = 0; j < assets.length; j++) {
+          const baseAsset = assets[j];
 
           if (self.validateQuoteBase(baseAsset.asset_id, quoteAsset.asset_id)) {
-            const chainAsset = self.api.asset.getChainById(baseAsset.chain_id);
+            const chainAsset = self.db.asset.getById(baseAsset.chain_id);
             if (!chainAsset) {
               continue;
             }
@@ -186,8 +216,8 @@ Market.prototype = {
       $('.layout.markets.container').on('click', '.market.item', function (event) {
         event.preventDefault();
         $('.nav.overlay .title').click();
-        const baseAsset = self.api.asset.getById($(this).data('base-symbol'));
-        const quoteAsset = self.api.asset.getById($(this).data('quote-symbol'));
+        const baseAsset = self.db.asset.getById($(this).data('base-symbol'));
+        const quoteAsset = self.db.asset.getById($(this).data('quote-symbol'));
         self.api.engine.unsubscribe(self.base.asset_id + '-' + self.quote.asset_id);
         self.refreshTrade(baseAsset, quoteAsset);
       });
@@ -198,8 +228,8 @@ Market.prototype = {
         var item = $(this).parent();
         var isStarTab = item.parent().hasClass('star');
 
-        const baseAsset = self.api.asset.getById(item.data('base-symbol'));
-        const quoteAsset = self.api.asset.getById(item.data('quote-symbol'));
+        const baseAsset = self.db.asset.getById(item.data('base-symbol'));
+        const quoteAsset = self.db.asset.getById(item.data('quote-symbol'));
         if (self.isFavoritedPair(baseAsset.asset_id, quoteAsset.asset_id)) {
           self.removeFavoritedPair(baseAsset.asset_id, quoteAsset.asset_id);
           $('#market-item-' + baseAsset.symbol + '-' + quoteAsset.symbol+' .favor').removeClass('active');
@@ -475,11 +505,11 @@ Market.prototype = {
 
   quotePrecision: function(assetId) {
     switch (assetId) {
-      case this.api.asset.xinAsset.asset_id:
+      case this.db.asset.xinAsset.asset_id:
         return 8;
-      case this.api.asset.btcAsset.asset_id:
+      case this.db.asset.btcAsset.asset_id:
         return 8;
-      case this.api.asset.usdtAsset.asset_id:
+      case this.db.asset.usdtAsset.asset_id:
         return 4;
       default:
         break;
@@ -489,11 +519,11 @@ Market.prototype = {
 
   quoteMinimum: function(assetId) {
     switch (assetId) {
-      case this.api.asset.xinAsset.asset_id:
+      case this.db.asset.xinAsset.asset_id:
         return 0.0001;
-      case this.api.asset.btcAsset.asset_id:
+      case this.db.asset.btcAsset.asset_id:
         return 0.0001;
-      case this.api.asset.usdtAsset.asset_id:
+      case this.db.asset.usdtAsset.asset_id:
         return 1;
       default:
         break;
@@ -536,7 +566,7 @@ Market.prototype = {
       return false;
     }
 
-    if (this.quote.asset_id === this.api.asset.usdtAsset.asset_id) {
+    if (this.quote.asset_id === this.db.asset.usdtAsset.asset_id) {
       priceDecimal = new BigNumber(priceDecimal.toFixed(4));
     }
 
@@ -1030,9 +1060,9 @@ Market.prototype = {
       return false;
     }
 
-    const btcAssetId = this.api.asset.btcAsset.asset_id;
-    const usdtAssetId = this.api.asset.usdtAsset.asset_id;
-    const xinAssetId = this.api.asset.xinAsset.asset_id;
+    const btcAssetId = this.db.asset.btcAsset.asset_id;
+    const usdtAssetId = this.db.asset.usdtAsset.asset_id;
+    const xinAssetId = this.db.asset.xinAsset.asset_id;
 
     if (quote !== btcAssetId && quote !== usdtAssetId && quote !== xinAssetId) {
       return false;
