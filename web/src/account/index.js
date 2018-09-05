@@ -7,6 +7,8 @@ import Mixin from '../api/mixin.js';
 import {BigNumber} from 'bignumber.js';
 import TimeUtils from '../utils/time.js';
 import Msgpack from '../helpers/msgpack.js';
+import Snapshot from './snapshot.js';
+
 
 function Account(router, api, db, bugsnag) {
   this.router = router;
@@ -17,6 +19,7 @@ function Account(router, api, db, bugsnag) {
   this.itemOrder = require('./order_item.html');
   this.mixin = new Mixin(this);
   this.msgpack = new Msgpack();
+  this.snapshot = new Snapshot(api, db, bugsnag);
   this.assets = {};
 }
 
@@ -71,174 +74,71 @@ Account.prototype = {
     });
   },
 
-  orders: function () {
+  fetchOrders: function (callback) {
     const self = this;
     self.fetchAssets(function () {
-      self.api.mixin.snapshots(function (resp) {
-        if (resp.error) {
-          self.api.notifyError('error', resp.error);
-          return;
-        }
-
-        resp.data = resp.data.filter(function(snapshot) {
-          return snapshot.memo !== '' && snapshot.memo !== undefined && self.isOrderMemo(snapshot.memo)
-        });
-
-        var orders = {};
-        var entryOrders = [];
-
-        for (var i = 0; i < resp.data.length; i++) {
-          const snapshot = resp.data[i];
-          var amount = new BigNumber(snapshot.amount);
-          if (amount.isNegative()) {
-            const orderAction = self.decodeMemo(snapshot);
-            if (orderAction && !orderAction.O && orderAction.S && orderAction.A && orderAction.T) {
-              if (orderAction.T === 'L' && !orderAction.P) {
-                self.bugsnag.notify(new Error('Error Limit Order'), { metaData: snapshot });
-                continue;
-              }
-
-              var order = {};
-
-              var baseAssetId;
-              if (orderAction.S === 'B') {
-                order.quote = self.db.asset.getById(snapshot.asset_id);
-                order.base = self.db.asset.getById(orderAction.A);
-                baseAssetId = orderAction.A;
-              } else {
-                order.quote = self.db.asset.getById(orderAction.A);
-                order.base = self.db.asset.getById(snapshot.asset_id);
-                baseAssetId = snapshot.asset_id;
-              }
-
-              if (!order.base) {
-                self.fetchAsset(baseAssetId);
-              }
-              order.assetId = orderAction.A;
-
-              if (orderAction.T === 'L' && orderAction.S === 'B') {
-                const priceDecimal = new BigNumber(orderAction.P);
-                if (isNaN(priceDecimal) || priceDecimal.isZero()) {
-                  continue;
-                }
-                order.amount = amount.div(priceDecimal).abs();
-              } else {
-                order.amount = amount.abs();
-              }
-
-              if (orderAction.T === 'M' && orderAction.S === 'B') {
-                if (order.quote) {
-                  order.amount_symbol = order.quote.symbol;
-                } else {
-                  order.amount_symbol = '???'
-                }
-              } else {
-                if (order.base) {
-                  order.amount_symbol = order.base.symbol;
-                } else {
-                  order.amount_symbol = '???'
-                }
-              }
-
-              if (orderAction.T === 'L') {
-                order.price = orderAction.P.replace(/\.?0+$/,"");
-                if (order.quote) {
-                  order.price_symbol = order.quote.symbol;
-                } else {
-                  order.price_symbol = '???'
-                }
-              }
-              
-              order.state = 'PENDING';
-              order.type = orderAction.T;
-              order.side = orderAction.S === 'B' ? 'Buy' : 'Sell';
-              order.sideLocale = orderAction.S === 'B' ? window.i18n.t('market.form.buy') : window.i18n.t('market.form.sell');
-              order.created_at = TimeUtils.short(snapshot.created_at);
-              order.order_id = snapshot.trace_id;
-              order.trace = uuid().toLowerCase();
-
-              orders[snapshot.trace_id] = order;
-              entryOrders.push(order);
-            }
-          }
-        }
-
-        for (var i = 0; i < resp.data.length; i++) {
-          const snapshot = resp.data[i];
-          const amount = new BigNumber(snapshot.amount);
-          if (amount.isPositive()) {
-            const orderAction = self.decodeMemo(snapshot);
-            if (orderAction && orderAction.S) {
-              switch (orderAction.S) {
-                case 'FILL':
-                case 'REFUND':
-                case 'CANCEL':
-                  const orderId = orderAction.O;
-                  var order = orders[orderId];
-                  if (order) {
-                    order.filled_amount = undefined;
-                    order.state = 'DONE';
-                    orders[orderId] = order;
-                  }
-                  break;
-                case 'MATCH':
-                  const askOrderId = orderAction.A;
-                  const bidOrderId = orderAction.B;
-
-                  var order = orders[askOrderId];
-                  if (!order || order.state === 'DONE' || order.assetId !== snapshot.asset_id) {
-                    order = orders[bidOrderId];
-                    if (!order || order.state === 'DONE' || order.assetId !== snapshot.asset_id) {
-                      break;
-                    }
-                  }
-                  
-                  if (!order.filled_amount) {
-                    order.filled_amount = new BigNumber(0);
-                  }
-                  order.filled_amount = order.filled_amount.plus(amount);
-                  if (order.amount.isEqualTo(order.filled_amount)) {
-                    order.filled_amount = undefined;
-                    order.state = 'DONE';
-                  }
-                  orders[order.order_id] = order;
-                  break;
-              } 
-            }
-          }
-        }
-
-        self.orders = entryOrders;
-
-        $('body').attr('class', 'account layout');
-        $('#layout-container').html(self.templateOrders({
-          guideURL: require('./cancel_guide.png')
-        }));
-
-        self.orderFilterType = 'L';
-        self.orderFilterState = 'PENDING';
-        self.filterOrders();
-
-        $('#orders-type').on('change', function() {
-          self.orderFilterType = $(this).val();
-          self.filterOrders();
-        });
-        $('#orders-status').on('change', function() {
-          self.orderFilterState = $(this).val();
-          self.filterOrders();
-        });
-
-        if (self.mixin.environment() == undefined) {
-          $('.header').on('click', '.account.sign.out.button', function () {
-            self.api.account.clear();
-            window.location.href = '/';
-          });
-        } else {
-          $('.account.sign.out.button').hide();
-        }
-        self.router.updatePageLinks();
-
+      self.db.order.fetchOrders(function (orders) {
+        callback(orders);
+        self.snapshot.syncSnapshots();
       });
+    });
+  },
+
+  orders: function () {
+    const self = this;
+    self.fetchOrders(function (orders) {
+      for (var i = 0; i < orders.length; i++) {
+        var order = orders[i];
+        order.trace = uuid().toLowerCase();
+        order.time = TimeUtils.short(order.created_at);
+        order.sideLocale = order.side === 'B' ? window.i18n.t('market.form.buy') : window.i18n.t('market.form.sell');
+        order.sideColor = order.side === 'B' ? 'Buy' : 'Sell';
+        order.quote = self.db.asset.getById(order.quote_asset_id);
+        order.base = self.db.asset.getById(order.base_asset_id);
+
+        if (order.order_type === 'M' && order.side === 'B') {
+          order.amount_symbol = order.quote ? order.quote.symbol : '???';
+        } else {
+          order.amount_symbol = order.base ? order.base.symbol : '???';
+        }
+        if (order.order_type === 'L' && order.price) {
+          order.price_symbol = order.quote ? order.quote.symbol : '???';
+        }
+
+        if (!order.base) {
+          self.fetchAsset(baseAssetId);
+        }
+      }
+
+      self.orders = orders;
+
+      $('body').attr('class', 'account layout');
+      $('#layout-container').html(self.templateOrders({
+        guideURL: require('./cancel_guide.png')
+      }));
+
+      self.orderFilterType = 'L';
+      self.orderFilterState = 'PENDING';
+      self.filterOrders();
+
+      $('#orders-type').on('change', function() {
+        self.orderFilterType = $(this).val();
+        self.filterOrders();
+      });
+      $('#orders-status').on('change', function() {
+        self.orderFilterState = $(this).val();
+        self.filterOrders();
+      });
+
+      if (self.mixin.environment() == undefined) {
+        $('.header').on('click', '.account.sign.out.button', function () {
+          self.api.account.clear();
+          window.location.href = '/';
+        });
+      } else {
+        $('.account.sign.out.button').hide();
+      }
+      self.router.updatePageLinks();
     });
   },
 
@@ -246,7 +146,7 @@ Account.prototype = {
     const type = this.orderFilterType;
     const state = this.orderFilterState;
     const orders = this.orders.filter(function(order) {
-      return order.type === type && order.state === state;
+      return order.order_type === type && order.state === state;
     });
 
     $('#orders-content').html(this.itemOrder({
@@ -265,7 +165,7 @@ Account.prototype = {
 
     const cancelAssets = [oooAssetId, cnbAssetId, nxcAssetId, candyAssetId];
     for (var i = 0; i < cancelAssets.length; i++) {
-      const asset = this.assets[cancelAssets[i]];
+      const asset = this.db.asset.getById(cancelAssets[i]);
       if (asset && parseFloat(asset.balance) > 0.00000001) {
         return asset;
       }

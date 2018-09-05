@@ -30,7 +30,7 @@ Snapshot.prototype = {
     }
   },
 
-  fetchNextPage: function(resp, pageEnd) {
+  fetchNextPage: function(resp, pageEnd, limit) {
     if (resp.data.length === 0) {
       return;
     }
@@ -41,14 +41,14 @@ Snapshot.prototype = {
     const startTime = window.localStorage.getItem('start_snapshots');
 
     if (startTime == null || firstSnapshot.created_at > startTime) {
-      window.localStorage.setItem('start_snapshots', firstSnapshot.created_at);  
+      window.localStorage.setItem('start_snapshots', firstSnapshot.created_at);
     }
 
     if (pageEnd || lastSnapshot.created_at <= this.firstTradeTime) {
       window.localStorage.setItem('end_snapshots', this.firstTradeTime);
     } else if (endTime == null || lastSnapshot.created_at < endTime) {
       window.localStorage.setItem('end_snapshots', lastSnapshot.created_at);
-      this.syncSnapshots(lastSnapshot.created_at, 500);
+      this.syncSnapshots(lastSnapshot.created_at, limit);
     }
   },
 
@@ -101,6 +101,9 @@ Snapshot.prototype = {
     const endTime = window.localStorage.getItem('end_snapshots');
     const isPageEnded = resp.data.length < limit;
     var snapshots = resp.data;
+
+    // console.info(resp.data);
+    // console.info(' startTime:' + startTime + ' endTime:' + endTime);
 
     if (startTime != null && endTime != null) {
       snapshots = resp.data.filter(function(snapshot) {
@@ -194,6 +197,11 @@ Snapshot.prototype = {
       }
     }
 
+    if (orders.length === 0 && transfers.length === 0) {
+      self.fetchNextPage(resp, isPageEnded, limit);
+      return;
+    }
+
     const db = self.database.db;
     if (db) {
       const tx = db.createTransaction();
@@ -211,12 +219,9 @@ Snapshot.prototype = {
         var ids = orders.map(function(row) {
           return row['order_id'];
         });
-        const predicate = lf.op.or(transferTable.ask_order_id.in(ids), transferTable.bid_order_id.in(ids));
+        const predicate = lf.op.or(transferTable.ask_order_id.in(ids), transferTable.bid_order_id.in(ids), transferTable.order_id.in(ids));
         return tx.attach(db.select().from(transferTable).where(predicate));
       }).then(function(transfers) {
-
-        
-
         var pendingOrders = self.pendingOrders;
         var orders = {};
 
@@ -234,7 +239,9 @@ Snapshot.prototype = {
             case 'REFUND':
             case 'CANCEL':
               var order = orders[transfer.order_id];
-              order.state = 'DONE';
+              if (order) {
+                order.state = 'DONE';  
+              }
               break;
             case 'MATCH':
               var order = orders[transfer.ask_order_id];
@@ -252,11 +259,11 @@ Snapshot.prototype = {
               break;
           }
         }
-        return self.database.order.saveOrders(db, pendingOrders);
+        return tx.attach(self.database.order.saveOrders(db, pendingOrders));
       }).then(function() {
         return tx.commit();
       }).then(function() {
-        self.fetchNextPage(resp, isPageEnded);
+        self.fetchNextPage(resp, isPageEnded, limit);
       });
     }
   }

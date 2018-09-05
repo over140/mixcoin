@@ -669,7 +669,6 @@ Market.prototype = {
       self.created_at = new Date();
       const traceId = data.trace_id;
       var url = 'pay?recipient=' + ENGINE_USER_ID + '&asset=' + assetId + '&amount=' + data.funds + '&memo=' + memo + '&trace=' + traceId;
-      console.info('url:' + url);
       clearInterval(self.paymentInterval);
       var verifyTrade = function() {
         self.api.mixin.verifyTrade(function (resp) {

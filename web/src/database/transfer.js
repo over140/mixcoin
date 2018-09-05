@@ -21,7 +21,16 @@ Transfer.prototype = {
         'created_at': transfer.created_at
       }));
     }
-    return this.db.insertOrReplace().into(transferTable).values(rows);
+    return db.insertOrReplace().into(transferTable).values(rows);
+  },
+
+  
+  getTransfers: function (callback, orderId) {
+    const transferTable = this.db.getSchema().table('transfers');
+    const predicate = lf.op.or(transferTable.ask_order_id.eq(orderId), transferTable.bid_order_id.eq(orderId), transferTable.order_id.eq(orderId));
+    this.db.select().from(transferTable).where(predicate).exec().then(function(rows) {
+      callback(rows);
+    });
   }
 
 };
