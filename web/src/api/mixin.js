@@ -34,8 +34,11 @@ Mixin.prototype = {
     });
   },
 
-  snapshots: function (callback, offset) {
-    this.api.requestMixin('GET', 'https://api.mixin.one/snapshots?limit=500&offset=' + offset, undefined, function (resp) {
+  snapshots: function (callback, offset, limit) {
+    if (limit === undefined) {
+      limit = 500;
+    }
+    this.api.requestMixin('GET', 'https://api.mixin.one/snapshots?limit=' + limit + '&offset=' + offset, undefined, function (resp) {
       return callback(resp);
     });
   },

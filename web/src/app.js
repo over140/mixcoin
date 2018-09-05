@@ -15,7 +15,7 @@ const Error404 = require('./404.html');
 const router = new Navigo(WEB_ROOT);
 const api = new API(router, API_ROOT, ENGINE_ROOT);
 const bugsnagClient = bugsnag('6a5f428fcc4525507ddb77cc24bdd5c8');
-const db = new Database(bugsnagClient);
+const db = new Database();
 
 window.i18n = new Locale(navigator.language);
 

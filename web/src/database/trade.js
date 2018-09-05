@@ -1,6 +1,4 @@
 
-import Msgpack from '../helpers/msgpack.js';
-
 function Trade() {
 }
 
