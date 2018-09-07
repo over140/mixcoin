@@ -1,6 +1,6 @@
 
-function Transfer() {
-
+function Transfer(database) {
+  this.database = database;
 }
 
 Transfer.prototype = {
@@ -26,9 +26,9 @@ Transfer.prototype = {
 
   
   getTransfers: function (callback, orderId) {
-    const transferTable = this.db.getSchema().table('transfers');
+    const transferTable = this.database.db.getSchema().table('transfers');
     const predicate = lf.op.or(transferTable.ask_order_id.eq(orderId), transferTable.bid_order_id.eq(orderId), transferTable.order_id.eq(orderId));
-    this.db.select().from(transferTable).where(predicate).exec().then(function(rows) {
+    this.database.db.select().from(transferTable).where(predicate).exec().then(function(rows) {
       callback(rows);
     });
   }

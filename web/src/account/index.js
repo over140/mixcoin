@@ -35,24 +35,6 @@ Account.prototype = {
     return buffer.toString('base64').replace(/\+/g, '-').replace(/\//g, '_');
   },
 
-  decode: function (base64) {
-    return new Buffer(base64.replace(/\-/g, '+').replace(/\_/g, '/'), 'base64');
-  },
-
-  isOrderMemo: function (base64) {
-    return /^([0-9a-zA-Z+/]{4})*(([0-9a-zA-Z+/]{2}==)|([0-9a-zA-Z+/]{3}=))?$/.test(base64.replace(/\-/g, '+').replace(/\_/g, '/'));
-  },
-
-  decodeMemo: function(snapshot) {
-    const buf = this.decode(snapshot.memo);
-    try {
-      return this.msgpack.decodeMap(buf, 0, buf.readUInt8(0) & 0x0f, 1);
-    } catch (error) {
-      this.bugsnag.notify(error, { metaData: snapshot });
-    }
-    return null;
-  },
-
   fetchAsset: function (assetId) {
     const self = this;
     self.api.mixin.asset(function (resp) {
@@ -210,10 +192,12 @@ Account.prototype = {
             return
           }
           if (resp.error) {
-            console.info(resp.error)
             return true;
           }
   
+          self.orders[orderId].state = 'DONE';
+          self.snapshot.syncSnapshots();
+
           $(item).fadeOut().remove();
 
           const data = resp.data;

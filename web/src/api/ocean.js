@@ -15,8 +15,11 @@ Ocean.prototype = {
     });
   },
 
-  trades: function (callback, market, offset) {
-    this.api.request('GET', 'https://events.ocean.one/markets/' + market + '/trades?order=DESC&limit=100&offset=' + offset, undefined, function (resp) {
+  trades: function (callback, market, offset, limit) {
+    if (!limit) {
+      limit = 100;
+    }
+    this.api.request('GET', 'https://events.ocean.one/markets/' + market + '/trades?limit=' + limit + '&offset=' + offset, undefined, function (resp) {
       return callback(resp);
     });
   }

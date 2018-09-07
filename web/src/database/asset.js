@@ -1,5 +1,6 @@
 
-function Asset() {
+function Asset(database) {
+  this.database = database;
   const assets = require('./assets.json');
   this.cache(assets);
   this.btcAsset = this.cacheAssets['c6d0c728-2624-429b-8e0d-d9d19b6592fa'];
@@ -10,6 +11,10 @@ function Asset() {
 Asset.prototype = {
 
   getById: function (assetId) {
+    const asset = this.cacheAssets[assetId];
+    if (asset) {
+      return asset;
+    }
     switch (assetId) {
       case this.btcAsset.asset_id:
         return this.btcAsset;
@@ -18,7 +23,7 @@ Asset.prototype = {
       case this.usdtAsset.asset_id:
         return this.usdtAsset;
       default:
-        return this.cacheAssets[assetId];
+        return null;
     }
   },
 
@@ -32,7 +37,7 @@ Asset.prototype = {
   },
 
   saveAsset: function (asset, callback) {
-    const assetTable = this.db.getSchema().table('assets');
+    const assetTable = this.database.db.getSchema().table('assets');
     var row = assetTable.createRow({
       'asset_id': asset.asset_id,
       'chain_id': asset.chain_id,
@@ -42,7 +47,7 @@ Asset.prototype = {
       'price_usd': asset.price_usd,
       'name': asset.name
     });
-    this.db.insertOrReplace().into(assetTable).values([row]).exec().then(function(rows) {
+    this.database.db.insertOrReplace().into(assetTable).values([row]).exec().then(function(rows) {
       if (callback) {
         callback(rows);
       }
@@ -50,7 +55,7 @@ Asset.prototype = {
   },
 
   saveAssets: function (assets, callback) {
-    const assetTable = this.db.getSchema().table('assets');
+    const assetTable = this.database.db.getSchema().table('assets');
     var rows = [];
     for (var i = 0; i < assets.length; i++) {
       const asset = assets[i];
@@ -64,7 +69,7 @@ Asset.prototype = {
         'name': asset.name
       }));
     }
-    this.db.insertOrReplace().into(assetTable).values(rows).exec().then(function(rows) {
+    this.database.db.insertOrReplace().into(assetTable).values(rows).exec().then(function(rows) {
       if (callback) {
         callback(rows);
       }
@@ -72,19 +77,11 @@ Asset.prototype = {
   },
 
   fetchAssets: function (callback) {
-    const assetTable = this.db.getSchema().table('assets');
-    this.db.select().from(assetTable).exec().then(function(rows) {
+    const assetTable = this.database.db.getSchema().table('assets');
+    this.database.db.select().from(assetTable).exec().then(function(rows) {
       callback(rows);
     });
-  },
-
-  // // return undefined or asset
-  // getAssetById: function (assetId, callback) {
-  //   const assetTable = this.db.getSchema().table('assets');
-  //   this.db.select().from(assetTable).where(assetTable.asset_id.eq(assetId)).exec().then(function(rows) {
-  //     callback(rows[0]);
-  //   });
-  // }
+  }
 
 };
 

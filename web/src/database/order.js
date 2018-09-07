@@ -1,6 +1,6 @@
 
-function Order() {
-  
+function Order(database) {
+  this.database = database;
 }
 
 Order.prototype = {
@@ -29,15 +29,15 @@ Order.prototype = {
   },
 
   fetchOrders: function (callback) {
-    const orderTable = this.db.getSchema().table('orders');
-    this.db.select().from(orderTable).exec().then(function(rows) {
+    const orderTable = this.database.db.getSchema().table('orders');
+    this.database.db.select().from(orderTable).exec().then(function(rows) {
       callback(rows);
     });
   },
 
   getOrder: function (callback, orderId) {
-    const orderTable = this.db.getSchema().table('orders');
-    this.db.select().from(orderTable).where(orderTable.order_id.eq(orderId)).exec().then(function(rows) {
+    const orderTable = this.database.db.getSchema().table('orders');
+    this.database.db.select().from(orderTable).where(orderTable.order_id.eq(orderId)).exec().then(function(rows) {
       callback(rows);
     });
   }

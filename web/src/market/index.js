@@ -8,11 +8,13 @@ import FormUtils from '../utils/form.js';
 import TimeUtils from '../utils/time.js';
 import Mixin from '../api/mixin.js';
 import {BigNumber} from 'bignumber.js';
+import MarketController from './market.js';
 
 function Market(router, api, db) {
   this.router = router;
   this.api = api;
   this.db = db;
+  this.marketController = new MarketController(api, db);
   this.templateIndex = require('./index.html');
   this.templateTrade = require('./trade.html');
   this.itemOrder = require('./order_item.html');
@@ -20,9 +22,8 @@ function Market(router, api, db) {
   this.itemMarket = require('./market_item.html');
   this.depthLevel = 0;
   this.mixin = new Mixin(this);
-  this.markets = {};
   this.favorited = window.localStorage.getItem("account.favorited");
-  if (!this.favorited || this.favorited === undefined) {
+  if (!this.favorited) {
     this.favorited = '';
   }
   jQueryColor($);
@@ -132,7 +133,7 @@ Market.prototype = {
       }
   
       var baseAsset = self.db.asset.getById(baseAssetId);
-      if (baseAsset === undefined) {
+      if (!baseAsset) {
         baseAsset = self.db.asset.getById(self.db.asset.btcAsset.asset_id);
       }
       const quoteAsset = self.db.asset.getById(quoteAssetId);
@@ -206,12 +207,13 @@ Market.prototype = {
             });
             $('.' + quoteAsset.symbol.toLowerCase() + '.markets').append(itemMark);
             if (isFavorited) {
-              $('#market-item-' + baseAsset.symbol + '-' + quoteAsset.symbol+' .favor').addClass('active');
+              $('#market-item-' + baseAsset.asset_id + '-' + quoteAsset.asset_id + ' .favor').addClass('active');
             }
-            self.refreshMarket(baseAsset, quoteAsset)
           }
         }
       }
+
+      self.refreshMarkets();
 
       $('.layout.markets.container').on('click', '.market.item', function (event) {
         event.preventDefault();
@@ -232,15 +234,15 @@ Market.prototype = {
         const quoteAsset = self.db.asset.getById(item.data('quote-symbol'));
         if (self.isFavoritedPair(baseAsset.asset_id, quoteAsset.asset_id)) {
           self.removeFavoritedPair(baseAsset.asset_id, quoteAsset.asset_id);
-          $('#market-item-' + baseAsset.symbol + '-' + quoteAsset.symbol+' .favor').removeClass('active');
+          $('#market-item-' + baseAsset.asset_id + '-' + quoteAsset.asset_id+' .favor').removeClass('active');
           if (isStarTab) {
             $(item).remove();
           } else {
-            $('.star.markets #market-item-' + baseAsset.symbol + '-' + quoteAsset.symbol).remove();
+            $('.star.markets #market-item-' + baseAsset.asset_id + '-' + quoteAsset.asset_id).remove();
           }
         } else {
           self.saveFavoritedPair(baseAsset.asset_id, quoteAsset.asset_id);
-          $('#market-item-' + baseAsset.symbol + '-' + quoteAsset.symbol+' .favor').addClass('active');
+          $('#market-item-' + baseAsset.asset_id + '-' + quoteAsset.asset_id+' .favor').addClass('active');
           $('.star.markets').append(item.clone());
         }
       });
@@ -253,30 +255,23 @@ Market.prototype = {
     });
   },
 
-  refreshMarket: function (baseAsset, quoteAsset) {
+  refreshMarkets: function () {
     const self = this;
-    this.api.market.oneMarket(function (resp) {
-      if (resp.error) {
-        return true;
+    self.marketController.syncServerMarkets(function (markets) {
+      for (var i = 0; i < markets.length; i++) {
+        const market = markets[i];
+        const marketItem = '#market-item-' + market.base + '-' + market.quote;
+        const direction = market.change < 0 ? 'down' : 'up';
+        const change = (market.change < 0 ? '' : '+') + Number(market.change * 100).toFixed(2) + '%';
+
+        $(marketItem + ' .price .text').html(market.price);
+        $(marketItem + ' .volume .text').html(new BigNumber(market.volume).toFixed(2));
+        $(marketItem + ' .change').removeClass('up');
+        $(marketItem + ' .change').removeClass('down');
+        $(marketItem + ' .change').addClass(direction);
+        $(marketItem + ' .change.' + direction).html(change);
       }
-
-      var m = resp.data;
-      
-      m.price = new BigNumber(m.price).toFixed(8).replace(/\.?0+$/,"");
-      const marketItem = '#market-item-' + baseAsset.symbol + '-' + quoteAsset.symbol;
-      const direction = m.change < 0 ? 'down' : 'up';
-      const change = (m.change < 0 ? '' : '+') + Number(m.change * 100).toFixed(2) + '%';
-      const volume = new BigNumber(m.volume).toFixed(2);
-
-      self.markets[baseAsset.asset_id + '-' + quoteAsset.asset_id] = m;
-
-      $(marketItem + ' .price .text').html(m.price);
-      $(marketItem + ' .volume .text').html(volume);
-      $(marketItem + ' .change').removeClass('up');
-      $(marketItem + ' .change').removeClass('down');
-      $(marketItem + ' .change').addClass(direction);
-      $(marketItem + ' .change.' + direction).html(change);
-    }, baseAsset.asset_id, quoteAsset.asset_id);
+    });
   },
 
   refreshTrade: function (baseAsset, quoteAsset) {
@@ -293,27 +288,18 @@ Market.prototype = {
     self.base = baseAsset;
     self.quote = quoteAsset;
 
-    var market = this.markets[baseAsset.asset_id + '-' + quoteAsset.asset_id];
-    if (market) {
+    self.db.market.getMarket(function (market) {
       self.renderTrade(market);
-    } else {
-      this.api.market.oneMarket(function (resp) {
-        if (resp.error) {
-          return true;
-        }
-        self.markets[baseAsset.asset_id + '-' + quoteAsset.asset_id] = resp.data;
-        self.renderTrade(resp.data);
-      }, baseAsset.asset_id, quoteAsset.asset_id);
-    }
+    }, baseAsset.asset_id, quoteAsset.asset_id);
   },
 
   pollMarket: function() {
     const self = this;
     self.api.market.oneMarket(function (resp) {
       if (resp.error) {
+        self.clearInterval(self.pullMarketInterval);
         return true;
       }
-      self.markets[self.base.asset_id + '-' + self.quote.asset_id] = resp.data;
       self.renderMarket(resp.data);
     }, self.base.asset_id, self.quote.asset_id);
   },
@@ -335,12 +321,18 @@ Market.prototype = {
     }));
 
     self.renderMarket(market);
-    clearInterval(self.pullMarketInterval);
-    self.pullMarketInterval = setInterval(function() {
-      self.pollMarket();
-    }, 5000);
+    if (market && market.source === 'SERVER') {
+      clearInterval(self.pullMarketInterval);
+      self.pullMarketInterval = setInterval(function() {
+        self.pollMarket();
+      }, 5000);
+    }
 
-    self.updateTickerPrice(market.price);
+    if (market) {
+      self.updateTickerPrice(market.price);
+    } else {
+      self.updateTickerPrice(0);
+    }
 
     $('.order.book').on('click', 'li', function (event) {
       event.preventDefault();
@@ -391,31 +383,45 @@ Market.prototype = {
       self.pollAccountBalance(self.quote.asset_id);
     };
     pollBalance();
-    self.balanceInterval = setInterval(pollBalance, 7000);
+    self.balanceInterval = setInterval(pollBalance, 8000);
 
     clearInterval(self.fetchTradesInterval);
-    var fetchTrades = function () {
-      var offset = TimeUtils.rfc3339(new Date());
-      self.api.ocean.trades(function (resp) {
-        if (resp.error) {
-          return true;
-        }
-        var trades = resp.data;
+    clearInterval(self.candleInterval);
+    if (market && market.source === 'SERVER') {
+      var fetchTrades = function () {
+        var offset = TimeUtils.rfc3339(new Date());
+        self.api.ocean.trades(function (resp) {
+          if (resp.error) {
+            return true;
+          }
+          var trades = resp.data;
+          for (var i = trades.length; i > 0; i--) {
+            self.addTradeEntry(trades[i-1]);
+          }
+          $('.trade.history .spinner-container').remove();
+          self.fixListItemHeight();
+        }, self.base.asset_id + '-' + self.quote.asset_id, offset);
+      };
+      self.fetchTradesInterval = setTimeout(function() { fetchTrades(); }, 1000);
+
+      self.pollCandles(3600);
+      self.candleInterval = setInterval(function () {
+        self.pollCandles(3600);
+      }, 60000);
+    } else {
+      self.marketController.syncTrades(function (trades) {
         for (var i = trades.length; i > 0; i--) {
           self.addTradeEntry(trades[i-1]);
         }
         $('.trade.history .spinner-container').remove();
         self.fixListItemHeight();
-      }, self.base.asset_id + '-' + self.quote.asset_id, offset);
-    };
-    self.fetchTradesInterval = setTimeout(function() { fetchTrades(); }, 1000);
+      }, self.base.asset_id, self.quote.asset_id);
 
-    clearInterval(self.candleInterval);
-    self.pollCandles(3600);
-    self.candleInterval = setInterval(function () {
-      self.pollCandles(3600);
-    }, 60000);
-    self.handleCandleSwitch();
+      $('.price.chart .spinner-container').remove();
+      $('.depth.chart .spinner-container').remove();
+    }
+
+    self.handleCandleSwitch(market);
 
     self.api.engine.subscribe(self.base.asset_id + '-' + self.quote.asset_id, function (msg) {
       self.render(msg);
@@ -423,26 +429,35 @@ Market.prototype = {
   },
 
   renderMarket: function(m) {
-    const direction = m.change < 0 ? 'down' : 'up';
-    const change = (m.change < 0 ? '' : '+') + Number(m.change * 100).toFixed(2) + '%';
-    const volume = new BigNumber(m.volume).toFixed(2);
-    const total = new BigNumber(m.total).toFixed(2);
-    m.price_usd = new BigNumber(m.price).times(m.quote_usd);
-    if (m.price_usd.toFixed(6).indexOf('0.0000') === 0) {
-      m.price_usd = new BigNumber(m.price_usd).toFixed(6);
-    } else if (m.price_usd.toFixed(4).indexOf('0.00') === 0) {
-      m.price_usd = new BigNumber(m.price_usd).toFixed(4);
-    } else {
-      m.price_usd = new BigNumber(m.price_usd).toFixed(2);
-    }
+    if (m) {
+      var quote_usd = this.quote.price_usd;
+      if (!quote_usd || isNaN(quote_usd)) {
+        quote_usd = 0;
+      }
+      const direction = m.change < 0 ? 'down' : 'up';
+      const change = (m.change < 0 ? '' : '+') + Number(m.change * 100).toFixed(2) + '%';
+      const volume = new BigNumber(m.volume).toFixed(2);
+      const total = new BigNumber(m.total).toFixed(2);
+      m.price_usd = new BigNumber(m.price).times(quote_usd);
+      if (m.price_usd.toFixed(6).indexOf('0.0000') === 0) {
+        m.price_usd = new BigNumber(m.price_usd).toFixed(6);
+      } else if (m.price_usd.toFixed(4).indexOf('0.00') === 0) {
+        m.price_usd = new BigNumber(m.price_usd).toFixed(4);
+      } else {
+        m.price_usd = new BigNumber(m.price_usd).toFixed(2);
+      }
 
-    this.quote_usd = m.quote_usd;
-    $('.ticker.change').removeClass('up');
-    $('.ticker.change').removeClass('down');
-    $('.ticker.change').addClass(direction);
-    $('.ticker.change .value').html(change);
-    $('.ticker.volume .value').html(volume);
-    $('.ticker.total .value').html(total);
+      $('.ticker.change').removeClass('up');
+      $('.ticker.change').removeClass('down');
+      $('.ticker.change').addClass(direction);
+      $('.ticker.change .value').html(change);
+      $('.ticker.volume .value').html(volume.replace(/\.?0+$/,""));
+      $('.ticker.total .value').html(total.replace(/\.?0+$/,""));
+    } else {
+      $('.ticker.change .value').html('0');
+      $('.ticker.volume .value').html('0');
+      $('.ticker.total .value').html('0');
+    }
   },
 
   handleFormSwitch: function () {
@@ -697,7 +712,7 @@ Market.prototype = {
     $('.trade.history .bid').css({'line-height': line, height: line});
   },
 
-  handleCandleSwitch: function () {
+  handleCandleSwitch: function (market) {
     const self = this;
     $('.charts.container .tabs li').click(function (event) {
       event.preventDefault();
@@ -713,12 +728,18 @@ Market.prototype = {
         $('.depth.chart').hide();
       }
       $('.price.chart').show();
-      const granularity = $(this).data('granularity');
+
       clearInterval(self.candleInterval);
-      self.pollCandles(granularity);
-      self.candleInterval = setInterval(function () {
+      if (market && market.source === 'SERVER') {
+        const granularity = $(this).data('granularity');
         self.pollCandles(granularity);
-      }, 60000);
+        self.candleInterval = setInterval(function () {
+          self.pollCandles(granularity);
+        }, 60000);
+      } else {
+        $('.price.chart .spinner-container').remove();
+        $('.depth.chart .spinner-container').remove();
+      }
     });
   },
 
@@ -816,9 +837,13 @@ Market.prototype = {
 
   updateTickerPrice: function (price) {
     const self = this;
+    var quote_usd = self.quote.price_usd;
+    if (!quote_usd || isNaN(quote_usd)) {
+      quote_usd = 0;
+    }
     $('.book.data .spread').attr('data-price', price);
     $('.quote.price').html(new BigNumber(price).toFixed(8).replace(/\.?0+$/,""));
-    var price_usd = new BigNumber(price).times(self.quote_usd);
+    var price_usd = new BigNumber(price).times(quote_usd);
     if (price_usd.toFixed(6).indexOf('0.0000') === 0) {
       price_usd = new BigNumber(price_usd).toFixed(6);
     } else if (price_usd.toFixed(4).indexOf('0.00') === 0) {
@@ -826,6 +851,7 @@ Market.prototype = {
     } else {
       price_usd = new BigNumber(price_usd).toFixed(2);
     }
+    price_usd = price_usd.replace(/\.?0+$/,"");
     $('.fiat.price').html('$' + price_usd);
   },
 

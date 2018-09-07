@@ -102,9 +102,6 @@ Snapshot.prototype = {
     const isPageEnded = resp.data.length < limit;
     var snapshots = resp.data;
 
-    // console.info(resp.data);
-    // console.info(' startTime:' + startTime + ' endTime:' + endTime);
-
     if (startTime != null && endTime != null) {
       snapshots = resp.data.filter(function(snapshot) {
         return snapshot.created_at > startTime || snapshot.created_at < endTime;
