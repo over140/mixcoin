@@ -606,6 +606,9 @@ Market.prototype = {
       event.preventDefault();
       var form = $(this);
       var data = FormUtils.serialize(this);
+      if (data.type === 'LIMIT' && data.side === 'BID') {
+        data.funds = new BigNumber(data.amount).times(data.price).toFixed(8);
+      }
 
       if (!self.validateOrder(data)) {
         $('.submit-loader', form).hide();
