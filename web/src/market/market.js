@@ -1,4 +1,5 @@
 import TimeUtils from '../utils/time.js';
+import {BigNumber} from 'bignumber.js';
 
 function MarketController(api, db) {
   this.api = api;
@@ -6,6 +7,64 @@ function MarketController(api, db) {
 }
 
 MarketController.prototype = {
+
+  processCandles: function (callback, baseAssetId, quoteAssetId, granularity) {
+    this.db.trade.fetchTrades(function (trades) {
+      if (trades.length == 0) {
+        callback([]);
+        return;
+      }
+      trades = trades.reverse();
+      var timestamp = new BigNumber(parseInt((new Date().getTime() / 1000).toFixed(0)));
+      timestamp = timestamp.minus(new BigNumber(granularity).times(60));
+      var candles = [];
+      var tradeIdx = 0;
+      var tradeTimestamp = new BigNumber(parseInt((new Date(trades[tradeIdx].created_at).getTime() / 1000).toFixed(0)));
+      var price = Number(trades[tradeIdx].price);
+      var firstOrder = false
+
+      for (var i = 0; i < 60; i++) {
+        if (tradeTimestamp.gt(timestamp.minus(granularity)) && tradeTimestamp.lte(timestamp) && tradeIdx < trades.length) {
+          firstOrder = true
+          var open = price;
+          var close = price;
+          var high = price;
+          var low = price;
+          var volume = new BigNumber(trades[tradeIdx].amount);
+          var total = new BigNumber(price).times(volume);
+          tradeIdx += 1;
+          for (; tradeIdx < trades.length; tradeIdx++) {
+            price = Number(trades[tradeIdx].price);
+            tradeTimestamp = new BigNumber(parseInt((new Date(trades[tradeIdx].created_at).getTime() / 1000).toFixed(0)));
+
+            if (tradeTimestamp.gt(timestamp.minus(granularity)) && tradeTimestamp.lte(timestamp)) {
+              if (price > high) {
+                high = price;
+              }
+              if (price < low) {
+                low = price;
+              }
+              volume = volume.plus(trades[tradeIdx].amount);
+              total = total.plus(new BigNumber(price).times(trades[tradeIdx].amount));
+            } else {
+              close = price;
+              break;
+            }
+          }
+          
+          candles.push([timestamp.toNumber(), Number(open), close, high, low, volume.toNumber(), total.toNumber()]);
+        } else {
+          if (firstOrder) {
+            candles.push([timestamp.toNumber(), price, price, price, price, 0, 0]); 
+          } else {
+            candles.push([timestamp.toNumber(), 0, 0, 0, 0, 0, 0]); 
+          }
+        }
+        timestamp = timestamp.plus(granularity);
+      }
+      callback(candles);
+    }, baseAssetId, quoteAssetId, 500);
+  },
 
   syncServerMarket: function (baseAssetId, quoteAssetId) {
     const self = this;

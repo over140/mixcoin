@@ -387,6 +387,9 @@ Market.prototype = {
 
     clearInterval(self.fetchTradesInterval);
     clearInterval(self.candleInterval);
+    self.currentMarket = market;
+
+    self.priceChart = null;
     if (market && market.source === 'SERVER') {
       var fetchTrades = function () {
         var offset = TimeUtils.rfc3339(new Date());
@@ -403,12 +406,19 @@ Market.prototype = {
         }, self.base.asset_id + '-' + self.quote.asset_id, offset);
       };
       self.fetchTradesInterval = setTimeout(function() { fetchTrades(); }, 1000);
-
+      $('#granularity60').removeClass('active');
+      $('#granularity86400').removeClass('active');
+      $('#granularity60').addClass('active');
+      
       self.pollCandles(3600);
       self.candleInterval = setInterval(function () {
         self.pollCandles(3600);
       }, 60000);
     } else {
+      $('#granularity60').removeClass('active');
+      $('#granularity86400').removeClass('active');
+      $('#granularity86400').addClass('active');
+      self.pollCandles(86400);
       self.marketController.syncTrades(function (trades) {
         for (var i = trades.length; i > 0; i--) {
           self.addTradeEntry(trades[i-1]);
@@ -416,9 +426,6 @@ Market.prototype = {
         $('.trade.history .spinner-container').remove();
         self.fixListItemHeight();
       }, self.base.asset_id, self.quote.asset_id);
-
-      $('.price.chart .spinner-container').remove();
-      $('.depth.chart .spinner-container').remove();
     }
 
     self.handleCandleSwitch(market);
@@ -430,15 +437,11 @@ Market.prototype = {
 
   renderMarket: function(m) {
     if (m) {
-      var quote_usd = this.quote.price_usd;
-      if (!quote_usd || isNaN(quote_usd)) {
-        quote_usd = 0;
-      }
       const direction = m.change < 0 ? 'down' : 'up';
       const change = (m.change < 0 ? '' : '+') + Number(m.change * 100).toFixed(2) + '%';
       const volume = new BigNumber(m.volume).toFixed(2);
       const total = new BigNumber(m.total).toFixed(2);
-      m.price_usd = new BigNumber(m.price).times(quote_usd);
+      m.price_usd = new BigNumber(m.price).times(this.quote.price_usd);
       if (m.price_usd.toFixed(6).indexOf('0.0000') === 0) {
         m.price_usd = new BigNumber(m.price_usd).toFixed(6);
       } else if (m.price_usd.toFixed(4).indexOf('0.00') === 0) {
@@ -730,27 +733,40 @@ Market.prototype = {
       $('.price.chart').show();
 
       clearInterval(self.candleInterval);
+      const granularity = $(this).data('granularity');
+      self.pollCandles(granularity);
       if (market && market.source === 'SERVER') {
-        const granularity = $(this).data('granularity');
-        self.pollCandles(granularity);
         self.candleInterval = setInterval(function () {
           self.pollCandles(granularity);
         }, 60000);
-      } else {
-        $('.price.chart .spinner-container').remove();
-        $('.depth.chart .spinner-container').remove();
       }
     });
   },
 
   pollCandles: function (granularity) {
     const self = this;
-    self.api.market.candles(function (resp) {
-      if (resp.error) {
-        return true;
-      }
-      self.renderCandleChart(resp.data);
-    }, self.base.asset_id + '-' + self.quote.asset_id, granularity);
+    if (self.currentMarket && self.currentMarket.source === 'SERVER') {
+      self.api.market.candles(function (resp) {
+        if (resp.error) {
+          return true;
+        }
+        self.renderCandleChart(resp.data);
+      }, self.base.asset_id + '-' + self.quote.asset_id, granularity);
+    } else {
+      self.marketController.processCandles(function (candles) {
+        if (candles.length == 0) {
+          if (self.priceChart) {
+            self.priceChart.series[0].setData([]);
+            self.priceChart.series[1].setData([]);
+          } else {
+            $('.price.chart .spinner-container').remove();
+          }
+        } else {
+          self.renderCandleChart(candles);
+        }
+        $('.depth.chart .spinner-container').remove();
+      }, self.base.asset_id, self.quote.asset_id, granularity);
+    }
   },
 
   renderCandleChart: function (data) {
@@ -836,14 +852,9 @@ Market.prototype = {
   },
 
   updateTickerPrice: function (price) {
-    const self = this;
-    var quote_usd = self.quote.price_usd;
-    if (!quote_usd || isNaN(quote_usd)) {
-      quote_usd = 0;
-    }
     $('.book.data .spread').attr('data-price', price);
     $('.quote.price').html(new BigNumber(price).toFixed(8).replace(/\.?0+$/,""));
-    var price_usd = new BigNumber(price).times(quote_usd);
+    var price_usd = new BigNumber(price).times(this.quote.price_usd);
     if (price_usd.toFixed(6).indexOf('0.0000') === 0) {
       price_usd = new BigNumber(price_usd).toFixed(6);
     } else if (price_usd.toFixed(4).indexOf('0.00') === 0) {

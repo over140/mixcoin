@@ -23,7 +23,6 @@ Transfer.prototype = {
     }
     return db.insertOrReplace().into(transferTable).values(rows);
   },
-
   
   getTransfers: function (callback, orderId) {
     const transferTable = this.database.db.getSchema().table('transfers');

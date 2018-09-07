@@ -8,7 +8,6 @@ function Trade(database) {
 Trade.prototype = {
 
   saveTrades: function (callback, trades, baseAssetId, quoteAssetId, market) {
-    const self = this;
     const db = this.database.db;
     const tradeTable = db.getSchema().table('trades');
     const marketTable = db.getSchema().table('markets');
@@ -82,12 +81,16 @@ Trade.prototype = {
     }
   },
 
-  getLastTrade: function (callback, baseAssetId, quoteAssetId) {
+  fetchTrades: function (callback, baseAssetId, quoteAssetId, limit) {
     const tradeTable = this.database.db.getSchema().table('trades');
     const predicate = lf.op.and(tradeTable.base.eq(baseAssetId), tradeTable.quote.eq(quoteAssetId));
-    this.database.db.select().from(tradeTable).where(predicate).limit(1).orderBy(tradeTable.created_at, lf.Order.DESC).exec().then(function(rows) {
+    this.database.db.select().from(tradeTable).where(predicate).limit(limit).orderBy(tradeTable.created_at, lf.Order.DESC).exec().then(function(rows) {
       callback(rows);
     });
+  },
+
+  getLastTrade: function (callback, baseAssetId, quoteAssetId) {
+    return this.fetchTrades(callback, baseAssetId, quoteAssetId, 1)
   }
 
 };
