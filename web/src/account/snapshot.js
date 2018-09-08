@@ -242,9 +242,9 @@ Snapshot.prototype = {
               break;
             case 'MATCH':
               var order = orders[transfer.ask_order_id];
-              if (!order || order.state === 'DONE' || order.base_asset_id !== transfer.asset_id) {
+              if (!order || order.state === 'DONE' || order.quote_asset_id !== transfer.asset_id) {
                 order = orders[transfer.bid_order_id];
-                if (!order || order.state === 'DONE' || order.quote_asset_id !== transfer.asset_id) {
+                if (!order || order.state === 'DONE' || order.base_asset_id !== transfer.asset_id) {
                   break;
                 }
               }

@@ -198,7 +198,13 @@ Account.prototype = {
             return true;
           }
   
-          self.orders[orderId].state = 'DONE';
+          for (var i = 0; i < self.orders.length; i++) {
+            var order = self.orders[i];
+            if (order.order_id === orderId) {
+              order.state = 'DONE';
+              break;
+            }
+          }
           self.snapshot.syncSnapshots();
 
           $(item).fadeOut().remove();
