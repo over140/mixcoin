@@ -16,6 +16,8 @@ const router = new Navigo(WEB_ROOT);
 const api = new API(router, API_ROOT, ENGINE_ROOT);
 const bugsnagClient = bugsnag('6a5f428fcc4525507ddb77cc24bdd5c8');
 const db = new Database();
+const OfflinePlugin = require('offline-plugin/runtime');
+
 
 window.i18n = new Locale(navigator.language);
 
@@ -35,6 +37,24 @@ router.hooks({
   },
   after: function(params) {
     router.updatePageLinks();
+  }
+});
+
+OfflinePlugin.install({
+  onInstalled: function() {
+    console.info('OfflinePlugin...onInstalled...');
+  },
+
+  onUpdating: function() {
+    console.info('OfflinePlugin...onUpdating...');
+  },
+
+  onUpdateReady: function() {
+    OfflinePlugin.applyUpdate();
+  },
+  onUpdated: function() {
+    console.info('OfflinePlugin...onUpdated...');
+    // window.location.reload();
   }
 });
 

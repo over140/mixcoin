@@ -8,7 +8,13 @@ function MarketController(api, db) {
 
 MarketController.prototype = {
 
+  getTimestamp: function(created_at) {
+    const date = new Date(created_at);
+    return parseInt((TimeUtils.getUTCDate(date).getTime() / 1000).toFixed(0));
+  },
+
   processCandles: function (callback, baseAssetId, quoteAssetId, granularity) {
+    const self = this;
     this.db.trade.fetchTrades(function (trades) {
       if (trades.length == 0) {
         callback([]);
@@ -19,7 +25,8 @@ MarketController.prototype = {
       timestamp = timestamp.minus(new BigNumber(granularity).times(60));
       var candles = [];
       var tradeIdx = 0;
-      var tradeTimestamp = new BigNumber(parseInt((new Date(trades[tradeIdx].created_at).getTime() / 1000).toFixed(0)));
+      
+      var tradeTimestamp = new BigNumber(self.getTimestamp(trades[tradeIdx].created_at));
       var price = Number(trades[tradeIdx].price);
       var firstOrder = false
 
@@ -35,7 +42,7 @@ MarketController.prototype = {
           tradeIdx += 1;
           for (; tradeIdx < trades.length; tradeIdx++) {
             price = Number(trades[tradeIdx].price);
-            tradeTimestamp = new BigNumber(parseInt((new Date(trades[tradeIdx].created_at).getTime() / 1000).toFixed(0)));
+            tradeTimestamp = new BigNumber(self.getTimestamp(trades[tradeIdx].created_at));
 
             if (tradeTimestamp.gt(timestamp.minus(granularity)) && tradeTimestamp.lte(timestamp)) {
               if (price > high) {

@@ -26,6 +26,10 @@ TimeUtils.prototype = {
     var minute = date.getMinutes() < 10 ? '0' + date.getMinutes() : date.getMinutes();
     var second = date.getSeconds() < 10 ? '0' + date.getSeconds() : date.getSeconds();
     return hour + ':' + minute + ':' + second;
+  },
+
+  getUTCDate: function (d) {
+    return new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), d.getUTCHours(), d.getUTCMinutes(), d.getUTCSeconds());
   }
 }
 

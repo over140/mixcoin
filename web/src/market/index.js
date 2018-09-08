@@ -297,7 +297,9 @@ Market.prototype = {
     const self = this;
     self.api.market.oneMarket(function (resp) {
       if (resp.error) {
-        self.clearInterval(self.pullMarketInterval);
+        if (self.pullMarketInterval) {
+          clearInterval(self.pullMarketInterval); 
+        }
         return true;
       }
       self.renderMarket(resp.data);
