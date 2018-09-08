@@ -30,7 +30,7 @@ Order.prototype = {
 
   fetchOrders: function (callback) {
     const orderTable = this.database.db.getSchema().table('orders');
-    this.database.db.select().from(orderTable).exec().then(function(rows) {
+    this.database.db.select().from(orderTable).orderBy(orderTable.created_at, lf.Order.DESC).exec().then(function(rows) {
       callback(rows);
     });
   },

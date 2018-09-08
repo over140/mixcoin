@@ -4,7 +4,6 @@ import 'intl-tel-input/build/css/intlTelInput.css';
 import 'intl-tel-input';
 import uuid from 'uuid/v4';
 import Mixin from '../api/mixin.js';
-import {BigNumber} from 'bignumber.js';
 import TimeUtils from '../utils/time.js';
 import Msgpack from '../helpers/msgpack.js';
 import Snapshot from './snapshot.js';

@@ -60,7 +60,7 @@ OfflinePlugin.install({
 
 router.on({
   '/': function () {
-    new Market(router, api, db).assets();
+    new Market(router, api, db, bugsnagClient).assets();
   },
   '/auth': function () {
     new Auth(router, api).render();

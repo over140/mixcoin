@@ -9,12 +9,14 @@ import TimeUtils from '../utils/time.js';
 import Mixin from '../api/mixin.js';
 import {BigNumber} from 'bignumber.js';
 import MarketController from './market.js';
+import Snapshot from '../account/snapshot.js';
 
-function Market(router, api, db) {
+function Market(router, api, db, bugsnag) {
   this.router = router;
   this.api = api;
   this.db = db;
   this.marketController = new MarketController(api, db);
+  this.snapshot = new Snapshot(api, db, bugsnag);
   this.templateIndex = require('./index.html');
   this.templateTrade = require('./trade.html');
   this.itemOrder = require('./order_item.html');
@@ -660,6 +662,8 @@ Market.prototype = {
           if (redirect_to != undefined) {
             redirect_to.close();
           }
+
+          self.snapshot.syncSnapshots();
 
           clearInterval(self.paymentInterval);
           
