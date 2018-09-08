@@ -87,7 +87,7 @@ Account.prototype = {
         }
 
         if (!order.base) {
-          self.fetchAsset(baseAssetId);
+          self.fetchAsset(order.base_asset_id);
         }
       }
 
