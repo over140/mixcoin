@@ -249,6 +249,10 @@ Market.prototype = {
         }
       });
 
+      $('.account.orders').on('click', function () {
+        self.router.replace('/orders');
+      });
+
       $('.action.ok').on('click', function () {
         $(".modal-container").hide();
       });

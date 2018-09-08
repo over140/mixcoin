@@ -111,6 +111,10 @@ Account.prototype = {
         self.filterOrders();
       });
 
+      $('.header').on('click', '.nav.back', function () {
+        self.router.replace('/');
+      });
+
       if (self.mixin.environment() == undefined) {
         $('.header').on('click', '.account.sign.out.button', function () {
           self.api.account.clear();
