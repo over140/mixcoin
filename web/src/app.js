@@ -7,11 +7,15 @@ import API from './api';
 import Auth from './auth';
 import Market from './market';
 import Account from './account';
+import Database from './database';
+import bugsnag from 'bugsnag-js';
 
 const PartialLoading = require('./loading.html');
 const Error404 = require('./404.html');
 const router = new Navigo(WEB_ROOT);
 const api = new API(router, API_ROOT, ENGINE_ROOT);
+const bugsnagClient = bugsnag('6a5f428fcc4525507ddb77cc24bdd5c8');
+const db = new Database();
 
 window.i18n = new Locale(navigator.language);
 
@@ -36,13 +40,13 @@ router.hooks({
 
 router.on({
   '/': function () {
-    new Market(router, api).assets();
+    new Market(router, api, db).assets();
   },
   '/auth': function () {
     new Auth(router, api).render();
   },
   '/orders': function () {
-    new Account(router, api).orders();
+    new Account(router, api, db, bugsnagClient).orders();
   }
 }).notFound(function () {
   $('#layout-container').html(Error404());
