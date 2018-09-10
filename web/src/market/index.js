@@ -82,10 +82,31 @@ Market.prototype = {
               self.db.asset.cache(assets);
               callback(assets);
             }
+            self.checkAssets(assets);
           });
         });
       });
     });
+  },
+
+  checkAssets: function(assets) {
+    const self = this;
+    const ids = ['815b0b1a-2764-3736-8faa-42d694fa620a', 'c94ac88f-4671-3976-b60a-09064f1811e8'];
+    for (var i = 0; i < ids.length; i++) {
+      const assetId = ids[i];
+      const filterAssets = assets.filter(function(asset) {
+        return asset.asset_id === assetId;
+      });
+      if (filterAssets.length == 0) {
+        self.api.mixin.asset(function (resp) {
+          if (resp.error) {
+            return;
+          }
+          self.db.asset.cacheAssets[resp.data.asset_id] = resp.data;
+          self.db.asset.saveAsset(resp.data);
+        }, assetId);
+      }
+    }
   },
 
   assets: function () {
