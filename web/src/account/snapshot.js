@@ -147,7 +147,7 @@ Snapshot.prototype = {
           }
           order.filled_amount = new BigNumber(0);
           order.side = orderAction.S;
-          order.price = orderAction.P ? orderAction.P.replace(/\.?0+$/,"") : '0';
+          order.price = orderAction.P ? orderAction.P.replace(/\.0+$/,"") : '0';
           order.state = 'PENDING';
           order.created_at = snapshot.created_at;
           orderMaps[snapshot.trace_id] = order;
