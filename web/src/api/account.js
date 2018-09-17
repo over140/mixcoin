@@ -37,6 +37,9 @@ Account.prototype = {
   },
 
   clear: function (callback) {
+    if (window.indexedDB) {
+      window.indexedDB.deleteDatabase('mixcoin');
+    }
     window.localStorage.clear();
     if (typeof callback === 'function') {
       callback();
