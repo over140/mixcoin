@@ -668,6 +668,7 @@ Market.prototype = {
       
       self.created_at = new Date();
       const traceId = data.trace_id;
+      const orderSide = data.side;
       var url = 'pay?recipient=' + ENGINE_USER_ID + '&asset=' + assetId + '&amount=' + data.funds + '&memo=' + memo + '&trace=' + traceId;
       clearInterval(self.paymentInterval);
       var verifyTrade = function() {
@@ -683,7 +684,6 @@ Market.prototype = {
             return true;
           }
 
-          const data = resp.data;
           if (redirect_to != undefined) {
             redirect_to.close();
           }
@@ -699,7 +699,7 @@ Market.prototype = {
           $('.trade.form input[name="amount"]').val('');
           $('.trade.form input[name="funds"]').val('');
           $('.trade.form input[name="trace_id"]').val(uuid().toLowerCase());
-          if (data.side === 'BID') {
+          if (orderSide === 'BID') {
             self.pollAccountBalance($('.trade.form form input[name="quote"]').val());
           } else {
             self.pollAccountBalance($('.trade.form form input[name="base"]').val());
