@@ -60,49 +60,83 @@ Market.prototype = {
     });
   },
 
-  updateClientMarket: function (baseAssetId, quoteAssetId) {
+  updateClientMarket: function (callback, baseAssetId, quoteAssetId, market) {
     const db = this.database.db;
     const tx = db.createTransaction();
     const marketTable = db.getSchema().table('markets');
     const tradeTable = db.getSchema().table('trades');
+    const marketPredicate = lf.op.and(marketTable.base.eq(baseAssetId), marketTable.quote.eq(quoteAssetId));
 
     tx.begin([tradeTable, marketTable]).then(function() {
       const date = TimeUtils.rfc3339(new Date(new Date().getTime() - 24*60*60*1000));
       const predicate = lf.op.and(tradeTable.base.eq(baseAssetId), tradeTable.quote.eq(quoteAssetId), tradeTable.created_at.gte(date));
       return tx.attach(db.select(tradeTable.amount, tradeTable.price).from(tradeTable).where(predicate).limit(1000).orderBy(tradeTable.created_at, lf.Order.DESC));
     }).then(function(trades) {
+      if (trades.length == 0) {
+        return Promise.resolve();
+      }
       var total = new BigNumber(0);
       var volume = new BigNumber(0);
-      var price = 0;
       var change = new BigNumber(0);
 
       for (var i = 0; i < trades.length; i++) {
         const trade = trades[i];
         const amount = new BigNumber(trade.amount);
-        volume.plus(amount);
-        total.plus(amount.times(trade.price));
+        volume = volume.plus(amount);
+        total = total.plus(amount.times(trade.price));
       }
 
-      if (trades.length > 0) {
-        price = trades[0].price;
-      }
-      if (trades.length > 1) {
-        const open = new BigNumber(trades[trades.length - 1].price);
-        const close = trades[0].price;
-        change = open.minus(close);
-      }
+      const lastTrade = trades[trades.length - 1];
+      const open = new BigNumber(lastTrade.price);
+      const close = trades[0].price;
+      change = open.minus(close);
 
-      const row = marketTable.createRow({
-        'base': baseAssetId,
-        'quote': quoteAssetId,
-        'price': price,
-        'volume': volume.toString(),
-        'total': total.toString(),
-        'change': change.toString(),
-        'source': 'CLIENT'
-      })
-      return tx.attach(db.insertOrReplace().into(marketTable).values([row]));
+      if (market) {
+        return tx.attach(db.update(marketTable)
+          .set(marketTable.volume, volume.toString())
+          .set(marketTable.total, total.toString())
+          .set(marketTable.change, change.toString())
+          .where(marketPredicate));
+      } else {
+        const row = marketTable.createRow({
+          'base': baseAssetId,
+          'quote': quoteAssetId,
+          'price': lastTrade.price,
+          'volume': volume.toString(),
+          'total': total.toString(),
+          'change': change.toString(),
+          'source': 'CLIENT',
+          'favorite_time': ''
+        });
+        return tx.attach(db.insertOrReplace().into(marketTable).values([row]));
+      }
     }).then(function() {
+      const predicate = lf.op.and(tradeTable.base.eq(baseAssetId), tradeTable.quote.eq(quoteAssetId));
+      return tx.attach(db.select().from(tradeTable).where(predicate).limit(1).orderBy(tradeTable.created_at, lf.Order.DESC));
+    }).then(function(trades) {
+      const lastTrade = trades[0];
+      if (!lastTrade) {
+        return Promise.resolve();
+      }
+      if (market) {
+        return tx.attach(db.update(marketTable).set(marketTable.price, lastTrade.price).where(marketPredicate));
+      } else {
+        const row = marketTable.createRow({
+          'base': baseAssetId,
+          'quote': quoteAssetId,
+          'price': lastTrade.price,
+          'volume': '0',
+          'total': '0',
+          'change': '0',
+          'source': 'CLIENT',
+          'favorite_time': ''
+        });
+        return tx.attach(db.insertOrReplace().into(marketTable).values([row]));
+      }
+    }).then(function() {
+      return tx.attach(db.select().from(marketTable).where(marketPredicate));
+    }).then(function(markets) {
+      callback(markets[0]);
       return tx.commit();
     });
   },

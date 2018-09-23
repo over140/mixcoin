@@ -449,6 +449,14 @@ Market.prototype = {
       $('#granularity86400').addClass('active');
       self.pollCandles(86400);
       self.marketController.syncTrades(function (trades) {
+        self.db.market.updateClientMarket(function(market) {
+          if (market) {
+            self.currentMarket = market;
+            self.renderMarket(market);
+            self.updateTickerPrice(market.price);
+          }
+        }, self.base.asset_id, self.quote.asset_id, market);
+
         for (var i = trades.length; i > 0; i--) {
           self.addTradeEntry(trades[i-1]);
         }

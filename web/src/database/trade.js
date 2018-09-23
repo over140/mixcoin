@@ -31,44 +31,6 @@ Trade.prototype = {
         }
         return tx.attach(db.insertOrReplace().into(tradeTable).values(rows));
       }).then(function() {
-        const date = TimeUtils.rfc3339(new Date(new Date().getTime() - 24*60*60*1000));
-        const predicate = lf.op.and(tradeTable.base.eq(baseAssetId), tradeTable.quote.eq(quoteAssetId), tradeTable.created_at.gte(date));
-        return tx.attach(db.select(tradeTable.amount, tradeTable.price).from(tradeTable).where(predicate).limit(1000).orderBy(tradeTable.created_at, lf.Order.DESC));
-      }).then(function(trades) {
-        var total = new BigNumber(0);
-        var volume = new BigNumber(0);
-        var price = market ? Number(market.price) : 0;
-        var change = new BigNumber(0);
-  
-        for (var i = 0; i < trades.length; i++) {
-          const trade = trades[i];
-          const amount = new BigNumber(trade.amount);
-          volume = volume.plus(amount);
-          total = total.plus(amount.times(trade.price));
-        }
-  
-        if (trades.length > 0) {
-          price = trades[0].price;
-        }
-        if (trades.length > 1) {
-          const open = new BigNumber(trades[trades.length - 1].price);
-          const close = trades[0].price;
-          change = open.minus(close);
-        }
-
-        const row = marketTable.createRow({
-          'base': baseAssetId,
-          'quote': quoteAssetId,
-          'price': price,
-          'volume': volume.toString(),
-          'total': total.toString(),
-          'change': change.toString(),
-          'source': 'CLIENT',
-          'favorite_time': ''
-        })
-
-        return tx.attach(db.insertOrReplace().into(marketTable).values([row]));
-      }).then(function() {
         return tx.attach(db.select().from(tradeTable).where(predicate).limit(50).orderBy(tradeTable.created_at, lf.Order.DESC));
       }).then(function(rows) {
         callback(rows);

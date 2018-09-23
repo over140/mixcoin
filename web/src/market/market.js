@@ -155,7 +155,7 @@ MarketController.prototype = {
             } else {
               self.syncTrades(callback, baseAssetId, quoteAssetId, 500);
             }
-          }, resp.data, baseAssetId, quoteAssetId, market);
+          }, resp.data, baseAssetId, quoteAssetId, market, trade);
         }, baseAssetId + '-' + quoteAssetId, offset, limit);
 
       }, baseAssetId, quoteAssetId);
