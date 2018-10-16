@@ -19,7 +19,7 @@ Ocean.prototype = {
     if (!limit) {
       limit = 100;
     }
-    this.api.request('GET', 'https://events.ocean.one/markets/' + market + '/trades?limit=' + limit + '&offset=' + offset, undefined, function (resp) {
+    this.api.request('GET', 'https://events.ocean.one/markets/' + market + '/trades?order=DESC&limit=' + limit + '&offset=' + offset, undefined, function (resp) {
       return callback(resp);
     });
   }
