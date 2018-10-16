@@ -854,7 +854,13 @@ Market.prototype = {
       case 'BOOK-T0':
         var book = data.data;
         self.book.asks = book.asks;
+        if (book.asks.length > 1000) {
+          self.book.asks = book.asks.slice(0, 1000);
+        }
         self.book.bids = book.bids;
+        if (book.bids.length > 1000) {
+          self.book.bids = book.bids.slice(0, 1000);
+        }
         $('.order.book .spinner-container').remove();
         $('.order.book .book.data').show();
         $('.order.book .order.item').remove();
