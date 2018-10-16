@@ -859,10 +859,10 @@ Market.prototype = {
         $('.order.book .book.data').show();
         $('.order.book .order.item').remove();
         for (var i = 0; i < book.asks.length; i++) {
-          self.orderOpenOnPage(book.asks[i], true);
+          self.orderOpenOnPage(book.asks[i], true, 'asks');
         }
         for (var i = 0; i < book.bids.length; i++) {
-          self.orderOpenOnPage(book.bids[i], true);
+          self.orderOpenOnPage(book.bids[i], true, 'bids');
         }
         self.fixListItemHeight();
         break;
@@ -933,7 +933,15 @@ Market.prototype = {
     $('.history.data li:nth-of-type(1n+100)').remove();
   },
 
-  orderOpenOnPage: function (o, instant) {
+  orderOpenOnPage: function (o, instant, type) {
+    var list = $('.order.item');
+    var maxOrders = 50;
+    if (type === 'bids') {
+      maxOrders = 100;
+    }
+    if (instant && list.length > maxOrders) {
+      return;
+    }
     const self = this;
     const price = new BigNumber(o.price);
     const amount = new BigNumber(o.amount);
@@ -964,7 +972,6 @@ Market.prototype = {
       return;
     }
 
-    var list = $('.order.item');
     var item = self.itemOrder(o);
     if (!instant) {
       item = $(item).css('background-color', bgColor).animate({ backgroundColor: "transparent" }, 500);
