@@ -250,8 +250,14 @@ Snapshot.prototype = {
               }
     
               order.filled_amount = order.filled_amount.plus(transfer.amount);
-              if (order.filled_amount.multipliedBy(1.0011).isGreaterThanOrEqualTo(order.amount)) {
-                order.state = 'DONE';
+              if (order.order_type = 'L' && order.side === 'S') {
+                if (order.filled_amount.multipliedBy(1.0011).isGreaterThanOrEqualTo(order.amount.multipliedBy(order.price))) {
+                  order.state = 'DONE';
+                }
+              } else {
+                if (order.filled_amount.multipliedBy(1.0011).isGreaterThanOrEqualTo(order.amount)) {
+                  order.state = 'DONE';
+                }
               }
               break;
           }
