@@ -24,6 +24,7 @@ function Market(router, api, db, bugsnag) {
   this.itemMarket = require('./market_item.html');
   this.depthLevel = 0;
   this.mixin = new Mixin(this);
+  this.groupCodeRegex = /https:\/\/mixin.one\/codes\/[a-z0-9_\-]{32,}/;
   this.favorited = window.localStorage.getItem("account.favorited");
   if (!this.favorited) {
     this.favorited = '';
@@ -333,6 +334,90 @@ Market.prototype = {
     }, self.base.asset_id, self.quote.asset_id);
   },
 
+  renderGroup: function (idx) {
+    let self = this;
+    const getUuid = require('uuid-by-string')
+    let conversationId = getUuid(self.base.asset_id + '-test-' + idx);
+
+    self.api.mixin.conversation(function (resp) {
+      if (resp.error) {
+        if (resp.error.code == 404) {
+          $('.join.action').attr('data-conversation', conversationId);
+          $('.join.action').html(window.i18n.t('market.group.button.create', { symbol: self.base.symbol }));
+          $('.join.action').show();
+        }
+        return true;
+      }
+      let conversation = resp.data;
+      let currentUserId = self.api.account.userId();
+      let participant = conversation.participants.filter(function(participant) {
+        return participant.user_id === currentUserId;
+      });
+
+      if (!participant) {
+        if (conversation.participants.count < 256 && groupCodeRegex.test(conversation.announcement)) {
+          $('.join.action').attr('href', conversationId);
+          $('.join.action').html(window.i18n.t('market.group.button.join', { symbol: self.base.symbol}));
+          $('.join.action').show();
+        } else {
+          self.renderGroup(idx + 1);
+        }
+      }
+    }, conversationId);
+  },
+
+  createOrJoinGroup: function(conversationId) {
+    if (!conversationId) {
+      return;
+    }
+
+    let self = this;
+    console.info('createOrJoinGroup------------------conversationId:' + conversationId);
+    self.api.mixin.conversation(function (resp) {
+      if (resp.error) {
+        if (resp.error.code == 404) {
+          let conversation = {
+            conversation_id: conversationId,
+            name: window.i18n.t('market.group.create', { symbol: self.base.symbol}),
+            category: 'GROUP',
+            participants: [{ user_id: 'b26b9a74-40dd-4e8d-8e41-94d9fce0b5c0', role: '' }]
+          };
+
+          console.info(conversation);
+
+          self.api.mixin.createConversation(function (resp) {
+            if (resp.error) {
+              console.info(resp.error);
+              return true;
+            }
+
+            self.api.mixin.updateConversation(function (resp) {
+              self.api.notify('success', window.i18n.t('market.group.tips.create'));
+            }, conversationId, resp.data.code_url);
+          }, conversation);
+        }
+        return true;
+      }
+
+      if (conversation.announcement) {
+        // https://mixin.one/codes/68247a15-0d84-47a1-8971-b5b8bba22293
+        let url = conversation.announcement.match(self.groupCodeRegex)[0];
+        if (url) {
+          let codeId = url.substr(url.indexOf('codes/') + 6);
+          console.info('codeId:' + codeId);
+          self.api.mixin.joinConversation(function (resp) {
+            if (resp.error) {
+              console.info(resp.error);
+              return true;
+            }
+
+            self.api.notify('success', window.i18n.t('market.group.tips.join'));
+          }, codeId);
+        }
+      }
+    }, conversationId);
+  },
+
   renderTrade: function (market) {
     const self = this;
 
@@ -348,6 +433,11 @@ Market.prototype = {
       quote: self.quote,
       trace: uuid().toLowerCase()
     }));
+
+    self.renderGroup(0);
+    $('.join.action').on('click', function () {
+      self.createOrJoinGroup($(this).attr('data-conversation'));
+    });
 
     self.renderMarket(market);
     if (market && market.source === 'SERVER') {

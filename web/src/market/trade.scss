@@ -458,6 +458,14 @@
           margin-right: 4px;
         }
       }
+
+      .join {
+        display: none;
+        border: 1px solid $color-main-highlight;
+        text-transform: none;
+        min-height: 36px;
+        color: $color-main-highlight;
+      }
     }
   }
 }

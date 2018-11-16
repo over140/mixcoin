@@ -64,6 +64,11 @@
     "form.amount": "Amount",
     "form.button.buy": "Buy %{symbol}",
     "form.button.sell": "Sell %{symbol}",
+    "group.button.join": "Join %{symbol} Trade Group",
+    "group.button.create": "Create %{symbol} Trade Group",
+    "group.create": "%{symbol} Trade Group",
+    "group.tips.create": "Group created successfully!",
+    "group.tips.join": "Group joined successfully!",
     "account.wallet": "Wallet",
     "account.orders": "My Orders",
     

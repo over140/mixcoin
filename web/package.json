@@ -32,6 +32,7 @@
     "reconnecting-websocket": "^4.0.0-rc5",
     "simple-line-icons": "^2.4.1",
     "uuid": "^3.3.2",
+    "uuid-by-string": "^2.0.1",
     "uuid-parse": "^1.0.0"
   },
   "devDependencies": {
