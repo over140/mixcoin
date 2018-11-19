@@ -116,12 +116,18 @@ Account.prototype = {
       });
 
       if (self.mixin.environment() == undefined) {
+        $('.nav.power.account.sign.out.button').html('<i class="icon-power"></i>');
         $('.header').on('click', '.account.sign.out.button', function () {
           self.api.account.clear();
           window.location.href = '/';
         });
       } else {
-        $('.account.sign.out.button').hide();
+        $('.nav.power.account.sign.out.button').html('<i class="icon-refresh"></i>');
+        $('.header').on('click', '.account.sign.out.button', function () {
+          window.localStorage.removeItem('start_snapshots');
+          window.localStorage.removeItem('end_snapshots');
+          window.location.reload();
+        });
       }
       self.router.updatePageLinks();
     });
