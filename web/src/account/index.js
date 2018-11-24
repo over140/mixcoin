@@ -211,6 +211,7 @@ Account.prototype = {
               break;
             }
           }
+          self.db.order.canceledOrder(orderId);
           self.snapshot.syncSnapshots();
 
           $(item).fadeOut().remove();

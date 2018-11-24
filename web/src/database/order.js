@@ -35,6 +35,11 @@ Order.prototype = {
     });
   },
 
+  canceledOrder: function (orderId) {
+    const orderTable = this.database.db.getSchema().table('orders');
+    this.database.db.update(orderTable).set(orderTable.state, 'DONE').where(orderTable.order_id.eq(orderId)).exec();
+  },
+
   getOrder: function (callback, orderId) {
     const orderTable = this.database.db.getSchema().table('orders');
     this.database.db.select().from(orderTable).where(orderTable.order_id.eq(orderId)).exec().then(function(rows) {
