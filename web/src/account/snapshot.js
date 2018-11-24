@@ -224,7 +224,7 @@ Snapshot.prototype = {
 
         for (var i = 0; i < pendingOrders.length; i++) {
           var order = pendingOrders[i];
-          order.filled_amount = new BigNumber(order.filled_amount);
+          order.filled_amount = new BigNumber(0);
           order.amount = new BigNumber(order.amount);
           orders[order.order_id] = order;
         }
