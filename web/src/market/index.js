@@ -165,30 +165,37 @@ Market.prototype = {
 
       $('.nav.overlay .title').on('click', function (event) {
         var marketContainer = $('.layout.markets.container');
+        var marketBar = $('.nav.panel');
         var iconArrow = $('.nav.overlay .arrow');
+        var tradeView = $('#layout-trade');
         if (marketContainer.is(":visible")) {
           iconArrow.removeClass('icon-arrow-up');  
           iconArrow.addClass('icon-arrow-down');
-          marketContainer.slideUp();
+          marketContainer.hide();
+          marketBar.hide();
+          tradeView.show();
         } else {
           iconArrow.removeClass('icon-arrow-down');
           iconArrow.addClass('icon-arrow-up');
-          marketContainer.slideDown();
+          marketContainer.show();
+          marketBar.show();
+          tradeView.hide();
         }
       });
 
-      const markets = ['star', 'usdt', 'xin', 'btc'];
+      const markets = ['star', 'usdt', 'btc', 'xin'];
       for (var i = 0; i < markets.length; i++) {
         const market = markets[i];
         $('.' + market + '.tab').on('click', function (event) {
           for (var j = 0; j < markets.length; j++) {
-            if (j !== i) {
+            if (markets[j] !== market) {
               $('.' + markets[j] + '.markets').hide();
             }
             $('.' + markets[j] + '.tab').removeClass('active');
           }
           $('.' + market + '.markets').show();
           $('.' + market + '.tab').addClass('active');
+          $(window).scrollTop(0);
         });
       }
 
