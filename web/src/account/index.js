@@ -173,7 +173,7 @@ Account.prototype = {
 
       const asset = self.getCancelOrderAsset();
       if (!asset) {
-        self.api.notify('error', window.i18n.t('invalid.insufficient.balance'));
+        self.api.notify('error', window.i18n.t('orders.insufficient.balance'));
         return;
       }  
 
