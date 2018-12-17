@@ -251,8 +251,14 @@ Snapshot.prototype = {
     
               order.filled_amount = order.filled_amount.plus(transfer.amount);
               if (order.order_type === 'L') {
-                if (order.filled_amount.multipliedBy(1.0011).isGreaterThanOrEqualTo(order.amount.multipliedBy(order.price))) {
-                  order.state = 'DONE';
+                if (order.side === 'B') {
+                  if (order.filled_amount.multipliedBy(1.0011).isGreaterThanOrEqualTo(order.amount)) {
+                    order.state = 'DONE';
+                  }
+                } else {
+                  if (order.filled_amount.multipliedBy(1.0011).isGreaterThanOrEqualTo(order.amount.multipliedBy(order.price))) {
+                    order.state = 'DONE';
+                  }
                 }
               } else {
                 if (order.filled_amount.multipliedBy(1.0011).isGreaterThanOrEqualTo(order.amount)) {
