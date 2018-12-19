@@ -43,6 +43,12 @@ Mixin.prototype = {
     });
   },
 
+  conversation: function (callback, conversationId) {
+    this.api.requestMixin('GET', 'https://api.mixin.one/conversations/' + conversationId, undefined, function (resp) {
+      return callback(resp);
+    });
+  },
+
   verifyTrade: function(callback, trace) {
     this.api.requestMixin('GET', 'https://api.mixin.one/transfers/trace/'+trace, undefined, function(resp) {
       return callback(resp);

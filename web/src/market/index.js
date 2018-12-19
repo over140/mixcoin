@@ -10,6 +10,7 @@ import Mixin from '../api/mixin.js';
 import {BigNumber} from 'bignumber.js';
 import MarketController from './market.js';
 import Snapshot from '../account/snapshot.js';
+import Group from '../api/group.js';
 
 function Market(router, api, db, bugsnag) {
   this.router = router;
@@ -24,6 +25,7 @@ function Market(router, api, db, bugsnag) {
   this.itemMarket = require('./market_item.html');
   this.depthLevel = 0;
   this.mixin = new Mixin(this);
+  this.group = new Group();
   this.favorited = window.localStorage.getItem("account.favorited");
   if (!this.favorited) {
     this.favorited = '';
@@ -340,6 +342,55 @@ Market.prototype = {
     }, self.base.asset_id, self.quote.asset_id);
   },
 
+  prepareUserId: function(callback) {
+    const currentUserId = this.api.account.userId();
+    if (currentUserId) {
+      callback(currentUserId);
+    } else {
+      this.api.account.info(function (resp) {
+        if (resp.error) {
+          return;
+        }
+        window.localStorage.setItem('user_id', resp.data.user_id);
+        callback(resp.data.user_id);
+      });
+    }
+  },
+
+  renderGroup: function() {
+    let self = this;
+    var group = self.group.getByAsset(navigator.language, self.quote.asset_id);
+    if (!group) {
+      group = self.group.getByAsset(navigator.language, self.base.asset_id);
+    }
+
+    if (group) {
+      let conversationId = group.conversation_id;
+      self.prepareUserId(function (currentUserId) {
+        if (!currentUserId) {
+          return;
+        }
+
+        self.api.mixin.conversation(function (resp) {
+          if (resp.error) {
+            return;
+          }
+  
+          let conversation = resp.data;
+          let participant = conversation.participants.filter(function(participant) {
+            return participant.user_id === currentUserId;
+          });
+  
+          if (participant.length == 0) {
+            $('.join.action').attr('href', group.url);
+            $('.join.action').html(group.name);
+            $('.join.action').show();
+          }
+        }, conversationId);
+      });
+    }
+  },
+
   renderTrade: function (market) {
     const self = this;
 
@@ -363,6 +414,8 @@ Market.prototype = {
         self.pollMarket();
       }, 5000);
     }
+
+    self.renderGroup();
 
     if (market) {
       self.updateTickerPrice(market.price);
