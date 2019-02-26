@@ -114,9 +114,14 @@ Market.prototype = {
   assets: function () {
     const self = this;
     self.fetchAssets(function (assets) {
-
+      const FxinAssetID = "91bde9a3-6a1e-3ad6-a5cb-6b70d4e3a102"
       const defaultIconUrl = 'https://images.mixin.one/yH_I5b0GiV2zDmvrXRyr3bK5xusjfy5q7FX3lw3mM2Ryx4Dfuj6Xcw8SHNRnDKm7ZVE3_LvpKlLdcLrlFQUBhds=s128';
       assets.sort(function (a, b) {
+        if (a.asset_id === FxinAssetID && b.asset_id !== FxinAssetID) {
+          return -1;
+        } else if (a.asset_id !== FxinAssetID && b.asset_id === FxinAssetID) {
+          return 1;
+        }
         var at = parseFloat(a.price_usd) * parseFloat(a.balance);
         var bt = parseFloat(b.price_usd) * parseFloat(b.balance);
         if (at > bt) {
@@ -141,6 +146,27 @@ Market.prototype = {
 
         return 0;
       });
+
+      var showFxin = true;
+      for (var i = 0; i < assets.length; i++) {
+        if (assets[i].asset_id === FxinAssetID) {
+          showFxin = false;
+        }
+      }
+      if (showFxin) {
+        var fxinAsset = {
+          asset_id: FxinAssetID,
+          chain_id: "43d61dcd-e413-450d-80b8-101d5e903357",
+          name: "FUTURE XIN",
+          icon_url: "https://images.mixin.one/yH_I5b0GiV2zDmvrXRyr3bK5xusjfy5q7FX3lw3mM2Ryx4Dfuj6Xcw8SHNRnDKm7ZVE3_LvpKlLdcLrlFQUBhds=s128",
+          price_usd: "0",
+          symbol: "FXIN",
+          balance: "0"
+        };
+        assets = assets.unshift(fxinAsset);
+        self.db.asset.cacheAssets[FxinAssetID] = fxinAsset;
+        self.db.asset.saveAsset(fxinAsset);
+      }
 
       $('#layout-container').html(self.templateIndex({
         title: "BTC-USDT",
