@@ -138,11 +138,15 @@ MarketController.prototype = {
       }
 
       self.db.trade.getLastTrade(function (trade) {
-        const offset = trade ? trade.created_at : '2018-08-05T23:59:59.779447612Z';
+        var offset = trade ? trade.created_at : '2018-08-05T23:59:59.779447612Z';
         if (!limit) {
           limit = trade ? 50 : 500;
         }
 
+        if (!offset) {
+          offset = TimeUtils.rfc3339(new Date())
+        }
+        
         self.api.ocean.trades(function (resp) {
           if (resp.error) {
             return true;
