@@ -670,6 +670,12 @@ Market.prototype = {
         self.api.notify('error', window.i18n.t('market.errors.funds.max', { fund: quoteMaxFunds.toFormat(), symbol: self.quote.symbol}));
         return false;
       }
+      
+      let amount = new BigNumber(data.amount);
+      if (amount.gt(maxAmount)) {
+        self.api.notify('error', window.i18n.t('market.errors.amount.max', { amount: maxAmount.toFormat(), symbol: self.base.symbol}));
+        return false;
+      }
     }
 
     if (data.side === 'ASK') {
