@@ -111,12 +111,44 @@ Market.prototype = {
     }
   },
 
-  assets: function () {
+  defaultMarket: function (baseSymbol) {
+    const self = this;
+    if (!baseSymbol || baseSymbol.toUpperCase() === 'XIN' || baseSymbol.toUpperCase() === 'USDT' || baseSymbol.toUpperCase() === 'BTC') {
+      self.assets();
+      return;
+    }
+    self.db.prepare(function () {
+      self.api.mixin.search(function (resp) {
+        if (resp.error || resp.data.length == 0) {
+          self.assets();
+          return;
+        }
+        const baseAsset = resp.data[0];
+        self.db.asset.cacheAssets[baseAsset.asset_id] = baseAsset;
+        self.db.asset.saveAsset(baseAsset);
+
+        window.localStorage.setItem('market.default.base', baseAsset.asset_id);
+        window.localStorage.setItem('market.default.quote', self.db.asset.usdtAsset.asset_id);
+
+        self.assets(baseAsset);
+      }, baseSymbol);
+    });
+  },
+
+  assets: function (topAsset) {
     const self = this;
     self.fetchAssets(function (assets) {
 
       const defaultIconUrl = 'https://images.mixin.one/yH_I5b0GiV2zDmvrXRyr3bK5xusjfy5q7FX3lw3mM2Ryx4Dfuj6Xcw8SHNRnDKm7ZVE3_LvpKlLdcLrlFQUBhds=s128';
       assets.sort(function (a, b) {
+        if (topAsset) {
+          if (a.asset_id === topAsset.asset_id && b.asset_id !== topAsset.asset_id) {
+            return -1;
+          } else if (a.asset_id !== topAsset.asset_id && b.asset_id === topAsset.asset_id) {
+            return 1;
+          }
+        }
+
         var at = parseFloat(a.price_usd) * parseFloat(a.balance);
         var bt = parseFloat(b.price_usd) * parseFloat(b.balance);
         if (at > bt) {
@@ -141,6 +173,19 @@ Market.prototype = {
 
         return 0;
       });
+
+      if (topAsset) {
+        var showTopAsset = true;
+        for (var i = 0; i < assets.length; i++) {
+          if (assets[i].asset_id === topAsset.asset_id) {
+            showTopAsset = false;
+          }
+        }
+
+        if (showTopAsset) {
+          assets = assets.unshift(topAsset);
+        }
+      }
 
       $('#layout-container').html(self.templateIndex({
         title: "BTC-USDT",

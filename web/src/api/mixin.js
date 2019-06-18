@@ -28,6 +28,12 @@ Mixin.prototype = {
     });
   },
 
+  search: function (callback, symbol) {
+    this.api.requestMixin('GET', 'https://api.mixin.one/network/assets/search/' + symbol, undefined, function (resp) {
+      return callback(resp);
+    });
+  },
+
   snapshot: function (callback, snapshotId) {
     this.api.requestMixin('GET', 'https://api.mixin.one/snapshots/' + snapshotId, undefined, function (resp) {
       return callback(resp);
