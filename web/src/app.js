@@ -62,7 +62,7 @@ router.on({
   '/': function () {
     new Market(router, api, db, bugsnagClient).assets();
   },
-  '/:base': function (params) {
+  '/market/:base': function (params) {
     new Market(router, api, db, bugsnagClient).defaultMarket(params['base']);
   },
   '/auth': function () {
