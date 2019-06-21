@@ -86,10 +86,9 @@ Market.prototype = {
         total = total.plus(amount.times(trade.price));
       }
 
-      const lastTrade = trades[trades.length - 1];
-      const open = new BigNumber(lastTrade.price);
-      const close = trades[0].price;
-      change = open.minus(close);
+      const open = new BigNumber(trades[trades.length - 1].price);
+      const close = new BigNumber(trades[0].price);
+      change = close.minus(open).div(open);
 
       if (market) {
         return tx.attach(db.update(marketTable)
