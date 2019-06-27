@@ -118,20 +118,37 @@ Market.prototype = {
       return;
     }
     self.db.prepare(function () {
-      self.api.mixin.search(function (resp) {
-        if (resp.error || resp.data.length == 0) {
-          self.assets();
-          return;
-        }
-        const baseAsset = resp.data[0];
-        self.db.asset.cacheAssets[baseAsset.asset_id] = baseAsset;
-        self.db.asset.saveAsset(baseAsset);
-
-        window.localStorage.setItem('market.default.base', baseAsset.asset_id);
-        window.localStorage.setItem('market.default.quote', self.db.asset.usdtAsset.asset_id);
-
-        self.assets(baseAsset);
-      }, baseSymbol);
+      if (baseSymbol.toUpperCase() === 'BCAT') {
+        self.api.mixin.asset(function (resp) {
+          if (resp.error) {
+            self.assets();
+            return;
+          }
+          const baseAsset = resp.data;
+          self.db.asset.cacheAssets[baseAsset.asset_id] = baseAsset;
+          self.db.asset.saveAsset(baseAsset);
+  
+          window.localStorage.setItem('market.default.base', baseAsset.asset_id);
+          window.localStorage.setItem('market.default.quote', self.db.asset.usdtAsset.asset_id);
+  
+          self.assets(baseAsset);
+        }, "94d6c6a3-3d3b-35f9-ae76-bbaa94c0caa9");
+      } else {
+        self.api.mixin.search(function (resp) {
+          if (resp.error || resp.data.length == 0) {
+            self.assets();
+            return;
+          }
+          const baseAsset = resp.data[0];
+          self.db.asset.cacheAssets[baseAsset.asset_id] = baseAsset;
+          self.db.asset.saveAsset(baseAsset);
+  
+          window.localStorage.setItem('market.default.base', baseAsset.asset_id);
+          window.localStorage.setItem('market.default.quote', self.db.asset.usdtAsset.asset_id);
+  
+          self.assets(baseAsset);
+        }, baseSymbol);
+      }
     });
   },
 
