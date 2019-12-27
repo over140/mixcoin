@@ -14,7 +14,7 @@
     "base64url": "^3.0.0",
     "bignumber.js": "^7.2.1",
     "bugsnag-js": "^4.7.3",
-    "handlebars": "^4.0.11",
+    "handlebars": "^4.3.0",
     "highcharts": "^6.1.4",
     "intl-tel-input": "^13.0.2",
     "jquery": "^3.3.1",
