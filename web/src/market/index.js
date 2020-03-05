@@ -66,7 +66,7 @@ Market.prototype = {
                 self.api.account.clear();
                 var obj = new URL(window.location);
                 var returnTo = encodeURIComponent(obj.href.substr(obj.origin.length));
-                window.location.replace('https://mixin.one/oauth/authorize?client_id=' + CLIENT_ID + '&scope=PROFILE:READ+ASSETS:READ&response_type=code&return_to=' + returnTo);
+                window.location.replace('https://mixin-www.zeromesh.net/oauth/authorize?client_id=' + CLIENT_ID + '&scope=PROFILE:READ+ASSETS:READ+SNAPSHOTS:READ&response_type=code&return_to=' + returnTo);
               });
     
               self.alertError(window.i18n.t('general.errors.asset_access_denied'));
