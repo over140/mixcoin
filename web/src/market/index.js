@@ -379,6 +379,7 @@ Market.prototype = {
     }
 
     $('.nav.overlay .title .text').html(baseAsset.symbol + '-' + quoteAsset.symbol);
+    document.title = baseAsset.symbol + ' - ' + quoteAsset.symbol;
 
     window.localStorage.setItem('market.default.base', baseAsset.asset_id);
     window.localStorage.setItem('market.default.quote', quoteAsset.asset_id);
