@@ -176,7 +176,11 @@ Snapshot.prototype = {
               break;
             case 'MATCH':
               transfer.ask_order_id = orderAction.A;
-              transfer.bid_order_id = orderAction.B;
+              if (orderAction.B) {
+                transfer.bid_order_id = orderAction.B;  
+              } else {
+                transfer.bid_order_id = '';
+              }
               transfers.push(transfer);
               break;
           }
@@ -250,18 +254,12 @@ Snapshot.prototype = {
               }
     
               order.filled_amount = order.filled_amount.plus(transfer.amount);
-              if (order.order_type === 'L') {
-                if (order.side === 'B') {
-                  if (order.filled_amount.multipliedBy(1.0011).isGreaterThanOrEqualTo(order.amount)) {
-                    order.state = 'DONE';
-                  }
-                } else {
-                  if (order.filled_amount.multipliedBy(1.0011).isGreaterThanOrEqualTo(order.amount.multipliedBy(order.price))) {
-                    order.state = 'DONE';
-                  }
+              if (order.side === 'B') {
+                if (order.filled_amount.multipliedBy(1.0011).isGreaterThanOrEqualTo(order.amount)) {
+                  order.state = 'DONE';
                 }
               } else {
-                if (order.filled_amount.multipliedBy(1.0011).isGreaterThanOrEqualTo(order.amount)) {
+                if (order.filled_amount.multipliedBy(1.0011).isGreaterThanOrEqualTo(order.amount.multipliedBy(order.price))) {
                   order.state = 'DONE';
                 }
               }
