@@ -78,6 +78,7 @@ Market.prototype = {
       var total = new BigNumber(0);
       var volume = new BigNumber(0);
       var change = new BigNumber(0);
+      const lastTrade = trades[0];
 
       for (var i = 0; i < trades.length; i++) {
         const trade = trades[i];
