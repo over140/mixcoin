@@ -2,7 +2,8 @@ import './index.scss';
 import './trade.scss';
 import $ from 'jquery';
 import jQueryColor from '../jquery-color-plus-names.js';
-import uuid from 'uuid/v4';
+import { v4 as uuid } from 'uuid';
+import { validate as uuidValidate } from 'uuid';
 import Chart from './chart.js';
 import FormUtils from '../utils/form.js';
 import TimeUtils from '../utils/time.js';
@@ -118,9 +119,10 @@ Market.prototype = {
       return;
     }
     self.db.prepare(function () {
-      if (baseSymbol.toUpperCase() === 'BCAT') {
+      if (uuidValidate(baseSymbol)) {
+        const baseAssetId = baseSymbol
         self.api.mixin.asset(function (resp) {
-          if (resp.error) {
+          if (resp.error || resp.data.length == 0) {
             self.assets();
             return;
           }
@@ -132,7 +134,7 @@ Market.prototype = {
           window.localStorage.setItem('market.default.quote', self.db.asset.usdtAsset.asset_id);
   
           self.assets(baseAsset);
-        }, "94d6c6a3-3d3b-35f9-ae76-bbaa94c0caa9");
+        }, baseAssetId);
       } else {
         self.api.mixin.search(function (resp) {
           if (resp.error || resp.data.length == 0) {

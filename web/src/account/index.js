@@ -2,7 +2,7 @@ import './index.scss';
 import $ from 'jquery';
 import 'intl-tel-input/build/css/intlTelInput.css';
 import 'intl-tel-input';
-import uuid from 'uuid/v4';
+import { v4 as uuid } from 'uuid';
 import Mixin from '../api/mixin.js';
 import TimeUtils from '../utils/time.js';
 import Msgpack from '../helpers/msgpack.js';
