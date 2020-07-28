@@ -382,7 +382,10 @@ Market.prototype = {
 
     $('.nav.overlay .title .text').html(baseAsset.symbol + '-' + quoteAsset.symbol);
     document.title = baseAsset.symbol + ' - ' + quoteAsset.symbol;
-
+    if (window.history.pushState) {
+      window.history.pushState("", "", WEB_ROOT + '/market/' + baseAsset.asset_id);  
+    }
+    
     window.localStorage.setItem('market.default.base', baseAsset.asset_id);
     window.localStorage.setItem('market.default.quote', quoteAsset.asset_id);
 
