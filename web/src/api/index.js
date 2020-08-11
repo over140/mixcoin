@@ -52,8 +52,8 @@ API.prototype = {
     if (path.indexOf('https://') === 0) {
       url = path;
     }
-    if (url.indexOf('https://api.mixin.one') === 0) {
-      var uri = path.slice('https://api.mixin.one'.length);
+    if (url.indexOf('https://mixin-api.zeromesh.net') === 0) {
+      var uri = path.slice('https://mixin-api.zeromesh.net'.length);
       self.account.mixinToken(uri, function (resp) {
         if (resp.error) {
           return callback(resp);

@@ -4,7 +4,7 @@ function Account(api) {
 
 Account.prototype = {
   info: function (callback) {
-    this.api.requestMixin('GET', 'https://api.mixin.one/me', undefined, function(resp) {
+    this.api.requestMixin('GET', 'https://mixin-api.zeromesh.net/me', undefined, function(resp) {
       return callback(resp);
     });
   },
@@ -15,7 +15,7 @@ Account.prototype = {
       "client_secret": CLIENT_SECRET,
       "client_id": CLIENT_ID
     };
-    this.api.requestMixin('POST', 'https://api.mixin.one/oauth/token', params, function(resp) {
+    this.api.requestMixin('POST', 'https://mixin-api.zeromesh.net/oauth/token', params, function(resp) {
       if (resp.data) {
         window.localStorage.setItem('token', resp.data.access_token);
         window.localStorage.setItem('scope', resp.data.scope);

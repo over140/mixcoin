@@ -17,25 +17,25 @@ Mixin.prototype = {
   },
 
   assets: function (callback) {
-    this.api.requestMixin('GET', 'https://api.mixin.one/assets', undefined, function (resp) {
+    this.api.requestMixin('GET', 'https://mixin-api.zeromesh.net/assets', undefined, function (resp) {
       return callback(resp);
     });
   },
 
   asset: function (callback, id) {
-    this.api.requestMixin('GET', 'https://api.mixin.one/assets/' + id, undefined, function (resp) {
+    this.api.requestMixin('GET', 'https://mixin-api.zeromesh.net/assets/' + id, undefined, function (resp) {
       return callback(resp);
     });
   },
 
   search: function (callback, symbol) {
-    this.api.requestMixin('GET', 'https://api.mixin.one/network/assets/search/' + symbol, undefined, function (resp) {
+    this.api.requestMixin('GET', 'https://mixin-api.zeromesh.net/network/assets/search/' + symbol, undefined, function (resp) {
       return callback(resp);
     });
   },
 
   snapshot: function (callback, snapshotId) {
-    this.api.requestMixin('GET', 'https://api.mixin.one/snapshots/' + snapshotId, undefined, function (resp) {
+    this.api.requestMixin('GET', 'https://mixin-api.zeromesh.net/snapshots/' + snapshotId, undefined, function (resp) {
       return callback(resp);
     });
   },
@@ -44,19 +44,19 @@ Mixin.prototype = {
     if (limit === undefined) {
       limit = 500;
     }
-    this.api.requestMixin('GET', 'https://api.mixin.one/snapshots?limit=' + limit + '&offset=' + offset, undefined, function (resp) {
+    this.api.requestMixin('GET', 'https://mixin-api.zeromesh.net/snapshots?limit=' + limit + '&offset=' + offset, undefined, function (resp) {
       return callback(resp);
     });
   },
 
   conversation: function (callback, conversationId) {
-    this.api.requestMixin('GET', 'https://api.mixin.one/conversations/' + conversationId, undefined, function (resp) {
+    this.api.requestMixin('GET', 'https://mixin-api.zeromesh.net/conversations/' + conversationId, undefined, function (resp) {
       return callback(resp);
     });
   },
 
   verifyTrade: function(callback, trace) {
-    this.api.requestMixin('GET', 'https://api.mixin.one/transfers/trace/'+trace, undefined, function(resp) {
+    this.api.requestMixin('GET', 'https://mixin-api.zeromesh.net/transfers/trace/'+trace, undefined, function(resp) {
       return callback(resp);
     });
   }
