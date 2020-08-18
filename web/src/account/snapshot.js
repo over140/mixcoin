@@ -125,6 +125,15 @@ Snapshot.prototype = {
       }
       
       if (amount.isNegative()) {
+        /*
+        type OrderAction struct {
+          S string    // side
+          A uuid.UUID // asset
+          P string    // price
+          T string    // type
+          O uuid.UUID // order
+        }
+        */
         if (!orderAction.O && orderAction.S && orderAction.A && orderAction.T) {
           if (orderAction.T === 'L' && !orderAction.P) {
             self.bugsnag.notify(new Error('Error Limit Order'), { metaData: snapshot });

@@ -17,6 +17,7 @@ Account.prototype = {
     };
     this.api.requestMixin('POST', 'https://mixin-api.zeromesh.net/oauth/token', params, function(resp) {
       if (resp.data) {
+        window.localStorage.setItem('user_id', resp.data.user_id);
         window.localStorage.setItem('token', resp.data.access_token);
         window.localStorage.setItem('scope', resp.data.scope);
       }

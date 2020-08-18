@@ -40,11 +40,15 @@ Mixin.prototype = {
     });
   },
 
-  snapshots: function (callback, offset, limit) {
+  snapshots: function (callback, offset, limit, opponent) {
     if (limit === undefined) {
       limit = 500;
     }
-    this.api.requestMixin('GET', 'https://mixin-api.zeromesh.net/snapshots?limit=' + limit + '&offset=' + offset, undefined, function (resp) {
+    var url = 'https://mixin-api.zeromesh.net/snapshots?limit=' + limit + '&offset=' + offset
+    if (opponent) {
+      url += '&opponent=' + opponent
+    }
+    this.api.requestMixin('GET', url, undefined, function (resp) {
       return callback(resp);
     });
   },

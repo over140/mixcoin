@@ -3,6 +3,12 @@ import $ from 'jquery';
 import 'intl-tel-input/build/css/intlTelInput.css';
 import 'intl-tel-input';
 import { v4 as uuid } from 'uuid';
+import forge from 'node-forge';
+import moment from 'moment';
+import jwt from 'jsonwebtoken';
+import LittleEndian from "int64-buffer";
+import crypto from 'crypto';
+
 import Mixin from '../api/mixin.js';
 import TimeUtils from '../utils/time.js';
 import Msgpack from '../helpers/msgpack.js';
@@ -148,7 +154,8 @@ Account.prototype = {
     this.handleOrderCancel();
   },
 
-  getCancelOrderAsset: function () {
+  getCancelOrderAsset: function (callback) {
+    const self = this;
     const oooAssetId = "de5a6414-c181-3ecc-b401-ce375d08c399";
     const cnbAssetId = "965e5c6e-434c-3fa9-b780-c50f43cd955c";
     const nxcAssetId = "66152c0b-3355-38ef-9ec5-cae97e29472a";
@@ -156,12 +163,120 @@ Account.prototype = {
 
     const cancelAssets = [oooAssetId, cnbAssetId, nxcAssetId, candyAssetId];
     for (var i = 0; i < cancelAssets.length; i++) {
-      const asset = this.db.asset.getById(cancelAssets[i]);
+      const asset = self.db.asset.getById(cancelAssets[i]);
       if (asset && parseFloat(asset.balance) > 0.00000001) {
-        return asset;
+        callback(asset);
+        return;
       }
     }
-    return undefined;
+    
+    self.sendUserCoin(function (resp) {
+      if (resp.error) {
+        return;
+      }
+
+      callback(self.db.asset.getById(cnbAssetId));
+    })
+  },
+
+  encryptedPin: function(pin, pinToken, sessionId, privateKey, iterator) {
+    const blockSize = 16;
+    let Uint64LE = LittleEndian.Int64BE;
+  
+    pinToken = new Buffer(pinToken, 'base64');
+    privateKey = forge.pki.privateKeyFromPem(privateKey);
+    let pinKey = privateKey.decrypt(pinToken, 'RSA-OAEP', {
+      md: forge.md.sha256.create(),
+      label: sessionId
+    });
+    let time = new Uint64LE(moment.utc().unix());
+    time = [...time.toBuffer()].reverse();
+    if (iterator == undefined || iterator === "") {
+      iterator = Date.now() * 1000000;
+    }
+    iterator = new Uint64LE(iterator);
+    iterator = [...iterator.toBuffer()].reverse();
+    pin = Buffer.from(pin, 'utf8');
+    let buf = Buffer.concat([pin, Buffer.from(time), Buffer.from(iterator)]);
+    let padding = blockSize - buf.length % blockSize;
+    let paddingArray = [];
+    for (let i = 0; i < padding; i++) {
+      paddingArray.push(padding);
+    }
+    buf = Buffer.concat([buf, new Buffer(paddingArray)]);
+  
+    let iv16 = crypto.randomBytes(16);
+    let cipher = crypto.createCipheriv('aes-256-cbc', this.hexToBytes(forge.util.binary.hex.encode(pinKey)), iv16);
+    cipher.setAutoPadding(false);
+    let encrypted_pin_buff = cipher.update(buf, 'utf-8');
+    encrypted_pin_buff = Buffer.concat([iv16, encrypted_pin_buff]);
+    return Buffer.from(encrypted_pin_buff).toString('base64');
+  },
+
+  hexToBytes: function (hex) {
+    var bytes = [];
+    for (let c = 0; c < hex.length; c += 2) {
+      bytes.push(parseInt(hex.substr(c, 2), 16));
+    }
+    return bytes;
+  },
+
+  signAuthenticationToken: function (uid, sid, privateKey, method, uri, params) {
+    if (typeof (params) === "object") {
+      params = JSON.stringify(params);
+    } else if (typeof (params) !== "string") {
+      params = ""
+    }
+
+    let expire = moment.utc().add(30, 'minutes').unix();
+    let md = forge.md.sha256.create();
+    md.update(forge.util.encodeUtf8(method + uri + params));
+    let payload = {
+      uid: uid,
+      sid: sid,
+      iat: moment.utc().unix(),
+      exp: expire,
+      jti: uuid(),
+      sig: md.digest().toHex(),
+      scp: 'FULL'
+    };
+    return jwt.sign(payload, privateKey, { algorithm: 'RS512' });
+  },
+
+  prepareUserId: function(callback) {
+    const currentUserId = this.api.account.userId();
+    if (currentUserId) {
+      callback(currentUserId);
+    } else {
+      this.api.account.info(function (resp) {
+        if (resp.error) {
+          return;
+        }
+        window.localStorage.setItem('user_id', resp.data.user_id);
+        callback(resp.data.user_id);
+      });
+    }
+  },
+
+  sendUserCoin: function(callback) {
+    const self = this;
+    self.prepareUserId(function (currentUserId) {
+      const params = {
+        asset_id : "965e5c6e-434c-3fa9-b780-c50f43cd955c",
+        opponent_id : currentUserId,
+        amount : "0.1",
+        pin : self.encryptedPin(CAPP_PIN, CAPP_PIN_TOKEN, CAPP_SESSION_ID, CAPP_PRIVATE_KEY),
+        memo : 'Used to cancel orders'
+      }
+
+      const method = 'POST';
+      const path = '/transfers';
+      const body = JSON.stringify(params);
+      
+      var url = 'https://mixin-api.zeromesh.net' + path;
+      var token = self.signAuthenticationToken(CAPP_USER_ID, CAPP_SESSION_ID, CAPP_PRIVATE_KEY, method, path, params);
+      return self.api.send(token, method, url, body, callback);
+    });
   },
 
   handleOrderCancel: function () {
@@ -171,66 +286,67 @@ Account.prototype = {
       const orderId = $(item).attr('data-id');
       const traceId = $(item).attr('trace-id');
 
-      const asset = self.getCancelOrderAsset();
-      if (!asset) {
-        self.api.notify('error', window.i18n.t('orders.insufficient.balance'));
-        return;
-      }  
-
-      const msgpack = require('msgpack5')();
-      const uuidParse = require('uuid-parse');
-      const memo = self.encode(msgpack.encode({"O": uuidParse.parse(orderId)}));
-
-      var redirect_to;
-      var url = 'pay?recipient=' + ENGINE_USER_ID + '&asset=' + asset.asset_id + '&amount=0.00000001&memo=' + memo + '&trace=' + traceId;
+      self.getCancelOrderAsset(function (asset) {
+        if (!asset) {
+          self.api.notify('error', window.i18n.t('orders.insufficient.balance'));
+          return;
+        }  
   
-      if (self.mixin.environment() == undefined) {
-        redirect_to = window.open("");
-      }
-      
-      self.created_at = new Date();
-      
-      clearInterval(self.paymentInterval);
-      var verifyTrade = function() {
-        self.api.mixin.verifyTrade(function (resp) {
-          if ((new Date() - self.created_at) > 60 * 1000) {
+        const msgpack = require('msgpack5')();
+        const uuidParse = require('uuid-parse');
+        const memo = self.encode(msgpack.encode({'O': uuidParse.parse(orderId)}));
+  
+        var redirect_to;
+        var url = 'pay?recipient=' + ENGINE_USER_ID + '&asset=' + asset.asset_id + '&amount=0.00000001&memo=' + memo + '&trace=' + traceId;
+    
+        if (self.mixin.environment() == undefined) {
+          redirect_to = window.open("");
+        }
+        
+        self.created_at = new Date();
+        
+        clearInterval(self.paymentInterval);
+        var verifyTrade = function() {
+          self.api.mixin.verifyTrade(function (resp) {
+            if ((new Date() - self.created_at) > 60 * 1000) {
+              if (redirect_to != undefined) {
+                redirect_to.close();
+              }
+              window.location.reload();
+              return
+            }
+            if (resp.error) {
+              return true;
+            }
+    
+            for (var i = 0; i < self.orders.length; i++) {
+              var order = self.orders[i];
+              if (order.order_id === orderId) {
+                order.state = 'DONE';
+                break;
+              }
+            }
+            self.db.order.canceledOrder(orderId);
+            self.snapshot.syncSnapshots();
+  
+            $(item).fadeOut().remove();
+  
+            const data = resp.data;
             if (redirect_to != undefined) {
               redirect_to.close();
             }
-            window.location.reload();
-            return
-          }
-          if (resp.error) {
-            return true;
-          }
-  
-          for (var i = 0; i < self.orders.length; i++) {
-            var order = self.orders[i];
-            if (order.order_id === orderId) {
-              order.state = 'DONE';
-              break;
-            }
-          }
-          self.db.order.canceledOrder(orderId);
-          self.snapshot.syncSnapshots();
-
-          $(item).fadeOut().remove();
-
-          const data = resp.data;
-          if (redirect_to != undefined) {
-            redirect_to.close();
-          }
-  
-          clearInterval(self.paymentInterval);
-        }, traceId);
-      }
-      self.paymentInterval = setInterval(function() { verifyTrade(); }, 3000);
-  
-      if (self.mixin.environment() == undefined) {
-        redirect_to.location = 'https://mixin.one/' + url;
-      } else {
-        window.location.replace('mixin://' + url);
-      }
+    
+            clearInterval(self.paymentInterval);
+          }, traceId);
+        }
+        self.paymentInterval = setInterval(function() { verifyTrade(); }, 3000);
+    
+        if (self.mixin.environment() == undefined) {
+          redirect_to.location = 'https://mixin.one/' + url;
+        } else {
+          window.location.replace('mixin://' + url);
+        }
+      });
     });
   }
 };
