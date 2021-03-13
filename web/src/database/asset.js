@@ -6,6 +6,7 @@ function Asset(database) {
   this.btcAsset = this.cacheAssets['c6d0c728-2624-429b-8e0d-d9d19b6592fa'];
   this.xinAsset = this.cacheAssets['c94ac88f-4671-3976-b60a-09064f1811e8'];
   this.usdtAsset = this.cacheAssets['815b0b1a-2764-3736-8faa-42d694fa620a'];
+  this.pusdAsset = this.cacheAssets['31d2ea9c-95eb-3355-b65b-ba096853bc18'];
 }
 
 Asset.prototype = {
@@ -22,6 +23,8 @@ Asset.prototype = {
         return this.xinAsset;
       case this.usdtAsset.asset_id:
         return this.usdtAsset;
+        case this.pusdAsset.asset_id:
+          return this.pusdAsset;
       default:
         return null;
     }

@@ -103,6 +103,7 @@ API.prototype = {
     if (!consumed) {
       switch (resp.error.code) {
         case 401:
+        case 403:
           this.account.clear();
           var obj = new URL(window.location);
           var returnTo = encodeURIComponent(obj.href.substr(obj.origin.length));

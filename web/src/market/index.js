@@ -75,7 +75,7 @@ Market.prototype = {
             return;
           }
   
-          const filterPatt = /^\w+$/;
+          const filterPatt = /^[a-zA-Z0-9\-_]+$/;
           resp.data = resp.data.filter(function(asset) {
             return filterPatt.test(asset.symbol)
           });
@@ -94,7 +94,8 @@ Market.prototype = {
 
   checkAssets: function(assets) {
     const self = this;
-    const ids = ['815b0b1a-2764-3736-8faa-42d694fa620a', 'c94ac88f-4671-3976-b60a-09064f1811e8'];
+    // USDT-OMNI, XIN, pUSD
+    const ids = ['815b0b1a-2764-3736-8faa-42d694fa620a', 'c94ac88f-4671-3976-b60a-09064f1811e8', '31d2ea9c-95eb-3355-b65b-ba096853bc18'];
     for (var i = 0; i < ids.length; i++) {
       const assetId = ids[i];
       const filterAssets = assets.filter(function(asset) {
@@ -114,7 +115,7 @@ Market.prototype = {
 
   defaultMarket: function (baseSymbol) {
     const self = this;
-    if (!baseSymbol || baseSymbol.toUpperCase() === 'XIN' || baseSymbol.toUpperCase() === 'USDT' || baseSymbol.toUpperCase() === 'BTC') {
+    if (!baseSymbol || baseSymbol.toUpperCase() === 'XIN' || baseSymbol.toUpperCase() === 'USDT' || baseSymbol.toUpperCase() === 'BTC' || baseSymbol.toUpperCase() === 'pUSD') {
       self.assets();
       return;
     }
@@ -131,7 +132,7 @@ Market.prototype = {
           self.db.asset.saveAsset(baseAsset);
   
           window.localStorage.setItem('market.default.base', baseAsset.asset_id);
-          window.localStorage.setItem('market.default.quote', self.db.asset.usdtAsset.asset_id);
+          window.localStorage.setItem('market.default.quote', self.db.asset.pusdAsset.asset_id);
   
           self.assets(baseAsset);
         }, baseAssetId);
@@ -146,7 +147,7 @@ Market.prototype = {
           self.db.asset.saveAsset(baseAsset);
   
           window.localStorage.setItem('market.default.base', baseAsset.asset_id);
-          window.localStorage.setItem('market.default.quote', self.db.asset.usdtAsset.asset_id);
+          window.localStorage.setItem('market.default.quote', self.db.asset.pusdAsset.asset_id);
   
           self.assets(baseAsset);
         }, baseSymbol);
@@ -218,7 +219,7 @@ Market.prototype = {
         baseAssetId = self.db.asset.btcAsset.asset_id;
       }
       if (!quoteAssetId || quoteAssetId === '') {
-        quoteAssetId = self.db.asset.usdtAsset.asset_id;
+        quoteAssetId = self.db.asset.pusdAsset.asset_id;
       }
   
       var baseAsset = self.db.asset.getById(baseAssetId);
@@ -249,7 +250,7 @@ Market.prototype = {
         }
       });
 
-      const markets = ['star', 'usdt', 'btc', 'xin'];
+      const markets = ['star', 'pusd', 'btc', 'xin', 'usdt'];
       for (var i = 0; i < markets.length; i++) {
         const market = markets[i];
         $('.' + market + '.tab').on('click', function (event) {
@@ -267,9 +268,9 @@ Market.prototype = {
 
       $('.usdt.markets').show();
 
-      const quotes = [self.db.asset.usdtAsset, self.db.asset.btcAsset, self.db.asset.xinAsset]
+      const quotes = [self.db.asset.pusdAsset, self.db.asset.btcAsset, self.db.asset.xinAsset, self.db.asset.usdtAsset]
 
-      for (var i = 0; i < 3; i++) {
+      for (var i = 0; i < 4; i++) {
         const quoteAsset = quotes[i];
 
         for (var j = 0; j < assets.length; j++) {
@@ -1142,7 +1143,7 @@ Market.prototype = {
     const amount = new BigNumber(o.amount);
 
     o.sideClass = o.side.toLowerCase()
-    if (self.quote.asset_id === '815b0b1a-2764-3736-8faa-42d694fa620a') {
+    if (self.quote.asset_id === '815b0b1a-2764-3736-8faa-42d694fa620a' || self.quote.asset_id === '31d2ea9c-95eb-3355-b65b-ba096853bc18') {
       o.price = new BigNumber(o.price).toFixed(4);
     } else {
       o.price = new BigNumber(o.price).toFixed(8);
@@ -1238,17 +1239,27 @@ Market.prototype = {
     const btcAssetId = this.db.asset.btcAsset.asset_id;
     const usdtAssetId = this.db.asset.usdtAsset.asset_id;
     const xinAssetId = this.db.asset.xinAsset.asset_id;
+    const pusdAssetId = this.db.asset.pusdAsset.asset_id;
 
-    if (quote !== btcAssetId && quote !== usdtAssetId && quote !== xinAssetId) {
+    if (quote !== btcAssetId && quote !== usdtAssetId && quote !== xinAssetId && quote !== pusdAssetId) {
       return false;
     }
     if (quote === btcAssetId && base === usdtAssetId) {
+      return false;
+    }
+    if (quote === btcAssetId && base === pusdAssetId) {
       return false;
     }
     if (quote === xinAssetId && base === usdtAssetId) {
       return false;
     }
     if (quote === xinAssetId && base === btcAssetId) {
+      return false;
+    }
+    if (quote === xinAssetId && base === pusdAssetId) {
+      return false;
+    }
+    if (quote === pusdAssetId && base === usdtAssetId) {
       return false;
     }
 

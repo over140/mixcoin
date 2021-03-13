@@ -19,5 +19,12 @@
     "icon_url": "https://images.mixin.one/E2y0BnTopFK9qey0YI-8xV3M82kudNnTaGw0U5SU065864SsewNUo6fe9kDF1HIzVYhXqzws4lBZnLj1lPsjk-0=s128",
     "name": "Mixin",
     "symbol": "XIN"
+  },
+  {
+    "chain_id": "43d61dcd-e413-450d-80b8-101d5e903357",
+    "asset_id": "31d2ea9c-95eb-3355-b65b-ba096853bc18",
+    "icon_url": "https://mixin-images.zeromesh.net/cH4GWuPXbzeZl6OOunpn7BxE25n3v8URwnNszs0FpZqv3OTlxP1zpzKw89VKTpBwWL-Ned1R36mmy1C4GMuPX1rL-PjfEJ2zby9V=s128",
+    "name": "Pando USD",
+    "symbol": "pUSD"
   }
 ]
