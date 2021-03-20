@@ -30,6 +30,21 @@ Asset.prototype = {
     }
   },
 
+  getBySymbol: function (symbol) {
+    switch (symbol) {
+      case this.btcAsset.symbol:
+        return this.btcAsset;
+      case this.xinAsset.symbol:
+        return this.xinAsset;
+      case this.usdtAsset.symbol:
+        return this.usdtAsset;
+        case this.pusdAsset.symbol:
+          return this.pusdAsset;
+      default:
+        return null;
+    }
+  },
+
   cache: function (assets) {
     var cacheAssets = {};
     for (var j = 0; j < assets.length; j++) {

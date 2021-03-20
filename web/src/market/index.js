@@ -115,11 +115,13 @@ Market.prototype = {
 
   defaultMarket: function (baseSymbol) {
     const self = this;
-    if (!baseSymbol || baseSymbol.toUpperCase() === 'XIN' || baseSymbol.toUpperCase() === 'USDT' || baseSymbol.toUpperCase() === 'BTC' || baseSymbol.toUpperCase() === 'pUSD') {
+    const quotes = ["XIN", "USDT", "BTC", "pUSD"];
+    if (!baseSymbol || quotes.includes(baseSymbol)) {
       self.assets();
       return;
     }
     self.db.prepare(function () {
+      const pair = baseSymbol.split("-");
       if (uuidValidate(baseSymbol)) {
         const baseAssetId = baseSymbol
         self.api.mixin.asset(function (resp) {
@@ -136,6 +138,23 @@ Market.prototype = {
   
           self.assets(baseAsset);
         }, baseAssetId);
+      } else if (pair.length == 2 && quotes.includes(pair[1])) {
+        const baseSymbol = pair[0];
+        const quoteSymbol = pair[1];
+        self.api.mixin.search(function (resp) {
+          if (resp.error || resp.data.length == 0) {
+            self.assets();
+            return;
+          }
+          const baseAsset = resp.data[0];
+          self.db.asset.cacheAssets[baseAsset.asset_id] = baseAsset;
+          self.db.asset.saveAsset(baseAsset);
+          
+          window.localStorage.setItem('market.default.base', baseAsset.asset_id);
+          window.localStorage.setItem('market.default.quote', self.db.asset.getBySymbol(quoteSymbol).asset_id);
+  
+          self.assets(baseAsset);
+        }, baseSymbol);
       } else {
         self.api.mixin.search(function (resp) {
           if (resp.error || resp.data.length == 0) {
