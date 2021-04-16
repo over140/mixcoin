@@ -18,7 +18,7 @@
     "highcharts": "^8.1.2",
     "intl-tel-input": "^13.0.2",
     "jquery": "^3.5.1",
-    "jsrsasign": "^8.0.20",
+    "jsrsasign": "^10.2.0",
     "lovefield": "^2.1.12",
     "int64-buffer": "^0.99.1007",
     "jsonwebtoken": "^8.5.1",
