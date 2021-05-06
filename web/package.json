@@ -15,7 +15,7 @@
     "bignumber.js": "^7.2.1",
     "bugsnag-js": "^4.7.3",
     "handlebars": "^4.7.6",
-    "highcharts": "^8.1.2",
+    "highcharts": "^9.0.0",
     "intl-tel-input": "^13.0.2",
     "jquery": "^3.5.1",
     "jsrsasign": "^8.0.20",
